@@ -164,7 +164,7 @@ impl GameState {
                 &self.enemy_pos_buf,
             );
         }
-        self.projectiles.extend(self.projectile_buf.drain(..));
+        self.projectiles.append(&mut self.projectile_buf);
         for proj in &mut self.projectiles {
             proj.update(self.player.x, self.player.y, &self.enemy_pos_buf);
         }

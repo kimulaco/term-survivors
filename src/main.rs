@@ -64,10 +64,9 @@ fn run_game() -> io::Result<()> {
     let mut terminal = Terminal::new(backend)?;
 
     let size = terminal.size()?;
-    let field_width = (size.width as i32 - 2).max(1).min(config::MAX_FIELD_WIDTH);
+    let field_width = (size.width as i32 - 2).clamp(1, config::MAX_FIELD_WIDTH);
     let field_height = (size.height as i32 - config::STATUS_BAR_HEIGHT as i32 - 2)
-        .max(1)
-        .min(config::MAX_FIELD_HEIGHT);
+        .clamp(1, config::MAX_FIELD_HEIGHT);
     let mut app = App::new(field_width, field_height);
 
     let tick_duration = Duration::from_millis(config::TICK_DURATION_MS);
@@ -197,10 +196,9 @@ fn run_game() -> io::Result<()> {
                     }
                 }
                 Event::Resize(w, h) => {
-                    let fw = (w as i32 - 2).max(1).min(config::MAX_FIELD_WIDTH);
+                    let fw = (w as i32 - 2).clamp(1, config::MAX_FIELD_WIDTH);
                     let fh = (h as i32 - config::STATUS_BAR_HEIGHT as i32 - 2)
-                        .max(1)
-                        .min(config::MAX_FIELD_HEIGHT);
+                        .clamp(1, config::MAX_FIELD_HEIGHT);
                     app.resize(fw, fh);
                 }
                 _ => {}

@@ -22,7 +22,7 @@ fn projectile_overlaps_enemy(proj: &Projectile, enemy: &Enemy) -> bool {
 
 /// Check projectile-enemy collisions, apply damage, return XP and kills
 pub fn process_combat(
-    projectiles: &mut Vec<Projectile>,
+    projectiles: &mut [Projectile],
     enemies: &mut Vec<Enemy>,
     player_x: i32,
     player_y: i32,
