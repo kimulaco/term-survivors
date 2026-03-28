@@ -1,0 +1,43 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of what the bug is.
+      placeholder: Describe what happened and what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. Run command `techscan lang . --reporter json`
+        2. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: |
+        - OS: [e.g. macOS 15.5, Windows 11]
+        - techscan version: [e.g. 0.2.0]
+        - Installation method: [e.g. Cargo]
+        - Rust version: [e.g. 1.75.0] (if installed via cargo)
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Output
+      description: If applicable, paste the error output here.
+      render: shell
+    validations:
+      required: true

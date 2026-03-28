@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/kimulaco/techscan/blob/main/README.md
+    about: Please check the README for usage instructions
