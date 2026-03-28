@@ -1,0 +1,16 @@
+# Rust
+/target
+
+# Env
+.env
+.env.*
+!.env.example
+.envrc
+
+# Docs for agent
+PLAN.md
+TODO.md
+SPEC.md
+
+# MacOS
+.DS_Store
