@@ -38,13 +38,13 @@ impl Player {
     }
 
     /// Apply damage to the player. Returns true if damage landed, false if blocked by invincibility.
-    pub fn take_damage(&mut self, damage: i32, muted: bool) -> bool {
+    pub fn take_damage(&mut self, damage: i32, sound_enabled: bool) -> bool {
         if self.invincible_ticks > 0 {
             return false;
         }
         self.hp = (self.hp - damage).max(0);
         self.invincible_ticks = config::PLAYER_INVINCIBLE_TICKS;
-        audio::play_player_hurt(muted);
+        audio::play_player_hurt(sound_enabled);
         true
     }
 

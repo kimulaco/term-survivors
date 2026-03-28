@@ -81,7 +81,7 @@ impl GameState {
         self.player.y = self.player.y.clamp(0, height - 1);
     }
 
-    pub fn tick(&mut self, dx: i32, dy: i32, muted: bool) -> TickResult {
+    pub fn tick(&mut self, dx: i32, dy: i32, sound_enabled: bool) -> TickResult {
         self.elapsed_ticks += 1;
 
         // Move player
@@ -191,7 +191,8 @@ impl GameState {
         }
 
         // Enemy-player contact
-        let screen_shake = combat::process_enemy_contact(&self.enemies, &mut self.player, muted);
+        let screen_shake =
+            combat::process_enemy_contact(&self.enemies, &mut self.player, sound_enabled);
 
         // Clean up expired projectiles
         self.projectiles.retain(|p| !p.is_expired() && p.pierce > 0);

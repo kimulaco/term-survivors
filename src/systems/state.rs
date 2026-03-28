@@ -104,8 +104,8 @@ impl App {
         }
     }
 
-    pub fn toggle_mute(&mut self) {
-        self.save.toggle_mute();
+    pub fn toggle_sound(&mut self) {
+        self.save.toggle_sound();
     }
 
     pub fn pause(&mut self) {
@@ -125,14 +125,14 @@ impl App {
             self.screen_shake_ticks -= 1;
         }
         if let AppPhase::Playing = &self.phase {
-            let result = self.game.tick(self.dx, self.dy, self.save.muted);
+            let result = self.game.tick(self.dx, self.dy, self.save.sound_enabled);
             if result.screen_shake > 0 {
                 self.screen_shake_ticks = result.screen_shake;
             }
             match result.outcome {
                 TickOutcome::Continue => {}
                 TickOutcome::LevelUp(choices) => {
-                    audio::play_level_up(self.save.muted);
+                    audio::play_level_up(self.save.sound_enabled);
                     self.phase = AppPhase::LevelUp(choices, 0);
                 }
                 TickOutcome::GameOver => {

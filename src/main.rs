@@ -100,7 +100,7 @@ fn run_game() -> io::Result<()> {
                                 }
                             }
                             KeyCode::Char('n') => app.start_game(),
-                            KeyCode::Char('v') => app.toggle_mute(),
+                            KeyCode::Char('v') => app.toggle_sound(),
                             KeyCode::Esc => {
                                 should_break = true;
                                 break;
@@ -123,7 +123,7 @@ fn run_game() -> io::Result<()> {
                                 KeyCode::Char('2') => app.select_starting_weapon(1),
                                 KeyCode::Char('3') => app.select_starting_weapon(2),
                                 KeyCode::Char('4') => app.select_starting_weapon(3),
-                                KeyCode::Char('v') => app.toggle_mute(),
+                                KeyCode::Char('v') => app.toggle_sound(),
                                 KeyCode::Esc => app.phase = AppPhase::Title,
                                 _ => {}
                             }
@@ -143,7 +143,7 @@ fn run_game() -> io::Result<()> {
                             }
                             KeyCode::Char(' ') => app.pause(),
                             KeyCode::Char('m') => app.return_to_title(),
-                            KeyCode::Char('v') => app.toggle_mute(),
+                            KeyCode::Char('v') => app.toggle_sound(),
                             KeyCode::Esc => {
                                 should_break = true;
                                 break;
@@ -152,7 +152,7 @@ fn run_game() -> io::Result<()> {
                         },
                         AppPhase::Paused => match key.code {
                             KeyCode::Char(' ') => app.resume_from_pause(),
-                            KeyCode::Char('v') => app.toggle_mute(),
+                            KeyCode::Char('v') => app.toggle_sound(),
                             KeyCode::Esc => {
                                 should_break = true;
                                 break;
@@ -177,7 +177,7 @@ fn run_game() -> io::Result<()> {
                                 KeyCode::Char('2') => app.select_upgrade(1),
                                 KeyCode::Char('3') => app.select_upgrade(2),
                                 KeyCode::Char('m') => app.return_to_title(),
-                                KeyCode::Char('v') => app.toggle_mute(),
+                                KeyCode::Char('v') => app.toggle_sound(),
                                 KeyCode::Esc => {
                                     should_break = true;
                                     break;

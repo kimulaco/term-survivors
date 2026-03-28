@@ -1,6 +1,6 @@
 #[cfg(all(not(test), target_os = "macos"))]
-pub fn play_level_up(muted: bool) {
-    if muted {
+pub fn play_level_up(sound_enabled: bool) {
+    if !sound_enabled {
         return;
     }
     let path = std::env::var("TERM_SURVIVORS_LEVELUP_SOUND")
@@ -9,8 +9,8 @@ pub fn play_level_up(muted: bool) {
 }
 
 #[cfg(all(not(test), not(target_os = "macos")))]
-pub fn play_level_up(muted: bool) {
-    if muted {
+pub fn play_level_up(sound_enabled: bool) {
+    if !sound_enabled {
         return;
     }
     use std::io::{self, Write};
@@ -18,11 +18,11 @@ pub fn play_level_up(muted: bool) {
 }
 
 #[cfg(test)]
-pub fn play_level_up(_muted: bool) {}
+pub fn play_level_up(_sound_enabled: bool) {}
 
 #[cfg(all(not(test), target_os = "macos"))]
-pub fn play_player_hurt(muted: bool) {
-    if muted {
+pub fn play_player_hurt(sound_enabled: bool) {
+    if !sound_enabled {
         return;
     }
     let path = std::env::var("TERM_SURVIVORS_HURT_SOUND")
@@ -31,8 +31,8 @@ pub fn play_player_hurt(muted: bool) {
 }
 
 #[cfg(all(not(test), not(target_os = "macos")))]
-pub fn play_player_hurt(muted: bool) {
-    if muted {
+pub fn play_player_hurt(sound_enabled: bool) {
+    if !sound_enabled {
         return;
     }
     use std::io::{self, Write};
@@ -40,4 +40,4 @@ pub fn play_player_hurt(muted: bool) {
 }
 
 #[cfg(test)]
-pub fn play_player_hurt(_muted: bool) {}
+pub fn play_player_hurt(_sound_enabled: bool) {}

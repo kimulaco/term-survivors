@@ -64,10 +64,10 @@ pub fn process_combat(
 
 /// Check enemy-player collisions, apply damage.
 /// Returns the shake power of the enemy that landed a hit, or 0 if no damage was taken.
-pub fn process_enemy_contact(enemies: &[Enemy], player: &mut Player, muted: bool) -> u32 {
+pub fn process_enemy_contact(enemies: &[Enemy], player: &mut Player, sound_enabled: bool) -> u32 {
     for enemy in enemies {
         if enemy.collides_with_player(player.x, player.y) {
-            if player.take_damage(enemy.damage, muted) {
+            if player.take_damage(enemy.damage, sound_enabled) {
                 return enemy.shake_power;
             }
             break; // Only take damage from one enemy per tick

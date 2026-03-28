@@ -27,14 +27,9 @@ fn ensure_save_dir() -> Option<PathBuf> {
     Some(dir)
 }
 
-fn default_muted() -> bool {
-    true
-}
-
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct Settings {
-    #[serde(default = "default_muted")]
-    pub muted: bool,
+    pub sound_enabled: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -82,8 +77,8 @@ impl Settings {
         }
     }
 
-    pub fn toggle_mute(&mut self) {
-        self.muted = !self.muted;
+    pub fn toggle_sound(&mut self) {
+        self.sound_enabled = !self.sound_enabled;
         self.save();
     }
 
@@ -152,5 +147,10 @@ mod tests {
     #[test]
     fn format_ticks_ten_minutes() {
         assert_eq!(Settings::format_ticks(60 * 600), "10:00");
+    }
+
+    #[test]
+    fn settings_default_sound_disabled() {
+        assert!(!Settings::default().sound_enabled);
     }
 }
