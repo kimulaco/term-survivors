@@ -1,0 +1,10 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/aquaproj/aqua/main/json-schema/aqua-yaml.json
+registries:
+  - type: standard
+    ref: v4.488.0
+packages:
+  - name: suzuki-shunsuke/pinact@v3.9.0
+checksum:
+  enabled: true
+  require_checksum: true
