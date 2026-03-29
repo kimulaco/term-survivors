@@ -57,12 +57,7 @@ pub fn generate_choices(weapons: &[Weapon]) -> Vec<Upgrade> {
     // Add new weapons if below max
     if weapons.len() < config::MAX_WEAPONS {
         let existing: Vec<WeaponKind> = weapons.iter().map(|w| w.kind).collect();
-        for kind in &[
-            WeaponKind::Orbit,
-            WeaponKind::Laser,
-            WeaponKind::Pulse,
-            WeaponKind::Drone,
-        ] {
+        for kind in &[WeaponKind::Orbit, WeaponKind::Laser, WeaponKind::Drone] {
             if !existing.contains(kind) {
                 pool.push(Upgrade::NewWeapon(*kind));
             }
@@ -135,7 +130,7 @@ mod tests {
     fn upgrade_description_not_empty() {
         let weapons = make_weapons();
         let upgrades = [
-            Upgrade::NewWeapon(WeaponKind::Pulse),
+            Upgrade::NewWeapon(WeaponKind::Drone),
             Upgrade::LevelUpWeapon(0),
             Upgrade::HealHp,
             Upgrade::MaxHpUp,
@@ -158,7 +153,7 @@ mod tests {
         let weapons = vec![
             Weapon::new(WeaponKind::Orbit),
             Weapon::new(WeaponKind::Laser),
-            Weapon::new(WeaponKind::Pulse),
+            Weapon::new(WeaponKind::Drone),
         ];
         for _ in 0..20 {
             let choices = generate_choices(&weapons);

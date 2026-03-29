@@ -2,14 +2,13 @@ use std::f64::consts::PI;
 
 use serde::{Deserialize, Serialize};
 
-use crate::config::{self, CooldownConfig, WeaponFireConfig};
+use crate::config::{self, WeaponFireConfig};
 use crate::entities::projectile::{self, Movement, Projectile};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum WeaponKind {
     Orbit,
     Laser,
-    Pulse,
     Drone,
 }
 
@@ -18,7 +17,6 @@ impl WeaponKind {
         match self {
             WeaponKind::Orbit => &config::WEAPON_ORBIT,
             WeaponKind::Laser => &config::WEAPON_LASER,
-            WeaponKind::Pulse => &config::WEAPON_PULSE,
             WeaponKind::Drone => &config::WEAPON_DRONE,
         }
     }
@@ -31,13 +29,12 @@ impl WeaponKind {
         self.stats().description
     }
 
-    /// Index into weapon hit cooldown table (Orbit=0, Laser=1, Pulse=2, Drone=3).
+    /// Index into weapon hit cooldown table (Orbit=0, Laser=1, Drone=2).
     pub fn idx(&self) -> u8 {
         match self {
             WeaponKind::Orbit => 0,
             WeaponKind::Laser => 1,
-            WeaponKind::Pulse => 2,
-            WeaponKind::Drone => 3,
+            WeaponKind::Drone => 2,
         }
     }
 }
@@ -47,7 +44,6 @@ impl WeaponKind {
 pub enum WeaponState {
     Orbit { angle: f64 },
     Laser,
-    Pulse,
     Drone,
 }
 
@@ -64,7 +60,6 @@ impl Weapon {
         let state = match kind {
             WeaponKind::Orbit => WeaponState::Orbit { angle: 0.0 },
             WeaponKind::Laser => WeaponState::Laser,
-            WeaponKind::Pulse => WeaponState::Pulse,
             WeaponKind::Drone => WeaponState::Drone,
         };
         Self {
@@ -86,13 +81,9 @@ impl Weapon {
     }
 
     fn cooldown(&self) -> u32 {
-        match self.kind.stats().cooldown {
-            CooldownConfig::PerLevel(table) => table[(self.level as usize - 1).min(4)],
-            CooldownConfig::Scaling(base) => {
-                let reduction = (self.level - 1) as f64 * 0.1;
-                (base as f64 * (1.0 - reduction)).max(5.0) as u32
-            }
-        }
+        let base = self.kind.stats().cooldown.0;
+        let reduction = (self.level - 1) as f64 * 0.1;
+        (base as f64 * (1.0 - reduction)).max(5.0) as u32
     }
 
     pub fn update(
@@ -130,7 +121,6 @@ impl Weapon {
                 }
             }
             WeaponKind::Laser => self.fire_laser(player_x, player_y, projectiles),
-            WeaponKind::Pulse => self.fire_pulse(player_x, player_y, projectiles),
             WeaponKind::Drone => self.fire_drone(player_x, player_y, projectiles, enemies),
         }
     }
@@ -232,33 +222,6 @@ impl Weapon {
         }
     }
 
-    fn fire_pulse(&self, player_x: i32, player_y: i32, projectiles: &mut Vec<Projectile>) {
-        let WeaponFireConfig::Pulse {
-            radius,
-            angle_divisions,
-            knockback,
-        } = config::WEAPON_PULSE.fire
-        else {
-            return;
-        };
-        let dmg = self.damage();
-        let idx = self.kind.idx();
-        let effective_radius = radius + self.level as i32;
-
-        for angle_step in 0..angle_divisions {
-            let angle = angle_step as f64 * 2.0 * PI / angle_divisions as f64;
-            for r in 1..=effective_radius {
-                let px = player_x + (r as f64 * angle.cos()) as i32;
-                let py = player_y + (r as f64 * angle.sin() * config::TERMINAL_Y_ASPECT) as i32;
-                projectiles.push(
-                    Projectile::new(px, py, '~', dmg, 6, Movement::Static, 1)
-                        .with_knockback(knockback)
-                        .with_weapon_kind(idx),
-                );
-            }
-        }
-    }
-
     fn fire_drone(
         &self,
         player_x: i32,
@@ -315,12 +278,7 @@ mod tests {
 
     #[test]
     fn weapon_kind_name_and_description() {
-        let kinds = [
-            WeaponKind::Orbit,
-            WeaponKind::Laser,
-            WeaponKind::Pulse,
-            WeaponKind::Drone,
-        ];
+        let kinds = [WeaponKind::Orbit, WeaponKind::Laser, WeaponKind::Drone];
         for kind in &kinds {
             assert!(!kind.name().is_empty());
             assert!(!kind.description().is_empty());
@@ -413,13 +371,5 @@ mod tests {
         projectiles.clear();
         w.update(10, 10, &mut projectiles, &[]);
         assert_eq!(projectiles.len(), 2);
-    }
-
-    #[test]
-    fn pulse_fires_area() {
-        let mut w = Weapon::new(WeaponKind::Pulse);
-        let mut projectiles = Vec::new();
-        w.update(10, 10, &mut projectiles, &[]);
-        assert!(!projectiles.is_empty());
     }
 }

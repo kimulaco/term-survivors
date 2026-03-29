@@ -198,12 +198,7 @@ pub fn run_single(cfg: &RunConfig, starting_weapon: WeaponKind) -> RunResult {
     }
 }
 
-pub const ALL_WEAPONS: [WeaponKind; 4] = [
-    WeaponKind::Orbit,
-    WeaponKind::Laser,
-    WeaponKind::Pulse,
-    WeaponKind::Drone,
-];
+pub const ALL_WEAPONS: [WeaponKind; 3] = [WeaponKind::Orbit, WeaponKind::Laser, WeaponKind::Drone];
 
 pub fn run_all(cfg: &RunConfig) -> Vec<RunResult> {
     let mut results = Vec::new();

@@ -53,7 +53,7 @@ pub struct Projectile {
     pub movement: Movement,
     pub pierce: i32,
     pub knockback: i32,
-    /// Index into WEAPON_HIT_COOLDOWNS: Orbit=0, Laser=1, Pulse=2, Drone=3
+    /// Index into WEAPON_HIT_COOLDOWNS: Orbit=0, Laser=1, Drone=2
     pub weapon_kind_idx: u8,
 }
 

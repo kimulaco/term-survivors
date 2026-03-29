@@ -311,7 +311,7 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
         let color = match proj.weapon_kind_idx {
             0 => Color::LightBlue, // Orbit
             1 => Color::Yellow,    // Laser
-            2 | 3 => Color::Cyan,  // Pulse, Drone
+            2 => Color::Cyan,      // Drone
             _ => Color::LightBlue,
         };
         let w = proj.width.max(1);
