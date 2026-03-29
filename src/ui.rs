@@ -308,11 +308,44 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
     let (sdx, sdy) = app.screen_shake_offset();
 
     for proj in &game.projectiles {
-        let color = match proj.weapon_kind_idx {
-            0 => Color::LightBlue, // Orbit
-            1 => Color::Yellow,    // Laser
-            2 => Color::Cyan,      // Drone
-            _ => Color::LightBlue,
+        // Fuse indicator (damage=0, weapon_kind_idx=3): blink + phase change
+        let (glyph, color) = if proj.damage == 0 && proj.weapon_kind_idx == 3 {
+            let period: u32 = if proj.ttl > 60 {
+                16
+            } else if proj.ttl > 30 {
+                8
+            } else {
+                4
+            };
+            if proj.ttl % period >= period / 2 {
+                (' ', Color::Reset) // write space to actively clear the cell
+            } else if proj.ttl > 60 {
+                ('O', Color::LightYellow)
+            } else if proj.ttl > 30 {
+                ('o', Color::Yellow)
+            } else {
+                ('*', Color::LightRed)
+            }
+        } else if proj.weapon_kind_idx == 3 && proj.delay_ticks > 0 {
+            // Bomb explosion cell during fuse: preview color matches fuse indicator phase
+            if proj.delay_ticks > 60 {
+                ('.', Color::DarkGray)
+            } else if proj.delay_ticks > 30 {
+                ('.', Color::Gray)
+            } else {
+                ('.', Color::Yellow)
+            }
+        } else if proj.weapon_kind_idx == 3 {
+            // Bomb explosion cell detonating
+            (proj.glyph, Color::Yellow)
+        } else {
+            let c = match proj.weapon_kind_idx {
+                0 => Color::LightBlue, // Orbit
+                1 => Color::Yellow,    // Laser
+                2 => Color::Cyan,      // Drone
+                _ => Color::LightBlue,
+            };
+            (proj.glyph, c)
         };
         let w = proj.width.max(1);
         let h = proj.height.max(1);
@@ -321,7 +354,7 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
                 let sx = inner.x as i32 + proj.x + dx + sdx;
                 let sy = inner.y as i32 + proj.y + dy + sdy;
                 if in_bounds(inner, sx, sy) {
-                    set_cell(buf, sx as u16, sy as u16, proj.glyph, color);
+                    set_cell(buf, sx as u16, sy as u16, glyph, color);
                 }
             }
         }

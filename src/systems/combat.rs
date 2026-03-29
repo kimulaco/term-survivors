@@ -31,7 +31,7 @@ pub fn process_combat(
     let mut kills = 0u32;
 
     for proj in projectiles.iter_mut() {
-        if proj.is_expired() || proj.pierce <= 0 {
+        if proj.is_expired() || proj.pierce <= 0 || proj.delay_ticks > 0 || proj.damage == 0 {
             continue;
         }
         for enemy in enemies.iter_mut() {

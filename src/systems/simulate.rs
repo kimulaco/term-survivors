@@ -2,6 +2,17 @@ use crate::entities::weapon::WeaponKind;
 use crate::systems::levelup::Upgrade;
 use crate::systems::session::{GameState, TickOutcome};
 
+/// Returns the center of the nearest active bomb fuse (damage=0, weapon_kind_idx=3),
+/// or None if no bomb is currently live.
+fn active_bomb_center(gs: &GameState) -> Option<(f64, f64)> {
+    let bomb_idx = WeaponKind::Bomb.idx();
+    gs.projectiles
+        .iter()
+        .filter(|p| p.damage == 0 && p.weapon_kind_idx == bomb_idx)
+        .map(|p| (p.x as f64, p.y as f64))
+        .next()
+}
+
 const MAX_TICKS: u32 = 120_000;
 
 pub struct RunConfig {
@@ -81,6 +92,7 @@ fn ai_move(gs: &GameState) -> (i32, i32) {
     let fw = gs.field_width as f64;
     let fh = gs.field_height as f64;
     let has_laser = gs.weapons.iter().any(|w| w.kind == WeaponKind::Laser);
+    let has_bomb = gs.weapons.iter().any(|w| w.kind == WeaponKind::Bomb);
 
     let mut fx = 0.0f64;
     let mut fy = 0.0f64;
@@ -111,6 +123,31 @@ fn ai_move(gs: &GameState) -> (i32, i32) {
                 }
             }
         }
+    }
+
+    // Bomb luring: when a bomb is live, ignore distant enemies so the player
+    // stays near the blast zone rather than fleeing far away.
+    // Only enemies within the danger threshold contribute repulsion.
+    // (Already accumulated above; zero out contributions from distant enemies.)
+    if has_bomb && active_bomb_center(gs).is_some() {
+        // Recompute fx/fy considering only close enemies
+        let mut fx2 = 0.0f64;
+        let mut fy2 = 0.0f64;
+        let danger_dist_sq = 25.0; // 5-cell radius
+        for e in &gs.enemies {
+            let dx = px - e.x as f64;
+            let dy = py - e.y as f64;
+            let adx = dx;
+            let ady = dy * 0.5;
+            let dist_sq = (adx * adx + ady * ady).max(0.5);
+            if dist_sq < danger_dist_sq {
+                let weight = e.damage as f64 / dist_sq;
+                fx2 += dx * weight;
+                fy2 += dy * weight;
+            }
+        }
+        fx = fx2;
+        fy = fy2;
     }
 
     // Soft wall repulsion: push away from edges within a margin
@@ -198,7 +235,12 @@ pub fn run_single(cfg: &RunConfig, starting_weapon: WeaponKind) -> RunResult {
     }
 }
 
-pub const ALL_WEAPONS: [WeaponKind; 3] = [WeaponKind::Orbit, WeaponKind::Laser, WeaponKind::Drone];
+pub const ALL_WEAPONS: [WeaponKind; 4] = [
+    WeaponKind::Orbit,
+    WeaponKind::Laser,
+    WeaponKind::Drone,
+    WeaponKind::Bomb,
+];
 
 pub fn run_all(cfg: &RunConfig) -> Vec<RunResult> {
     let mut results = Vec::new();

@@ -5,8 +5,12 @@ use crate::save::{GameSaveData, Settings};
 use crate::systems::levelup::Upgrade;
 use crate::systems::session::{GameState, TickOutcome};
 
-pub const WEAPON_CHOICES: [WeaponKind; 3] =
-    [WeaponKind::Orbit, WeaponKind::Laser, WeaponKind::Drone];
+pub const WEAPON_CHOICES: [WeaponKind; 4] = [
+    WeaponKind::Orbit,
+    WeaponKind::Laser,
+    WeaponKind::Drone,
+    WeaponKind::Bomb,
+];
 
 pub enum AppPhase {
     Title,

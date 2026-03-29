@@ -20,6 +20,11 @@ pub enum WeaponFireConfig {
         knockback: i32,
     },
     Drone,
+    Bomb {
+        radius: i32,
+        fuse_ticks: u32,
+        fuse_reduction_per_level: u32,
+    },
 }
 
 /// Unified weapon stat block used for all weapon kinds.
@@ -71,11 +76,25 @@ pub const WEAPON_DRONE: WeaponStats = WeaponStats {
     fire: WeaponFireConfig::Drone,
 };
 
-/// Returns the hit cooldown for a weapon by its kind index (Orbit=0, Laser=1, Drone=2).
+pub const WEAPON_BOMB: WeaponStats = WeaponStats {
+    name: "Bomb",
+    description: "Places delayed explosions; lure enemies in",
+    damage_table: [35, 50, 65, 85, 110],
+    cooldown: CooldownConfig(120),
+    hit_cooldown: 15,
+    fire: WeaponFireConfig::Bomb {
+        radius: 2,
+        fuse_ticks: 90,
+        fuse_reduction_per_level: 10,
+    },
+};
+
+/// Returns the hit cooldown for a weapon by its kind index (Orbit=0, Laser=1, Drone=2, Bomb=3).
 pub fn weapon_hit_cooldown(weapon_kind_idx: usize) -> u32 {
     match weapon_kind_idx {
         0 => WEAPON_ORBIT.hit_cooldown,
         1 => WEAPON_LASER.hit_cooldown,
-        _ => WEAPON_DRONE.hit_cooldown,
+        2 => WEAPON_DRONE.hit_cooldown,
+        _ => WEAPON_BOMB.hit_cooldown,
     }
 }

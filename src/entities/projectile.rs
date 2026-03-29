@@ -53,8 +53,10 @@ pub struct Projectile {
     pub movement: Movement,
     pub pierce: i32,
     pub knockback: i32,
-    /// Index into WEAPON_HIT_COOLDOWNS: Orbit=0, Laser=1, Drone=2
+    /// Index into WEAPON_HIT_COOLDOWNS: Orbit=0, Laser=1, Drone=2, Bomb=3
     pub weapon_kind_idx: u8,
+    /// Ticks remaining before this projectile becomes active (0 = active now).
+    pub delay_ticks: u32,
 }
 
 impl Projectile {
@@ -79,6 +81,7 @@ impl Projectile {
             pierce,
             knockback: 0,
             weapon_kind_idx: 0,
+            delay_ticks: 0,
         }
     }
 
@@ -98,7 +101,16 @@ impl Projectile {
         self
     }
 
+    pub fn with_delay(mut self, ticks: u32) -> Self {
+        self.delay_ticks = ticks;
+        self
+    }
+
     pub fn update(&mut self, player_x: i32, player_y: i32, enemies: &[(u64, i32, i32)]) {
+        if self.delay_ticks > 0 {
+            self.delay_ticks -= 1;
+            return;
+        }
         if self.ttl == 0 {
             return;
         }
