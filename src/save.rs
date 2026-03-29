@@ -30,6 +30,7 @@ fn ensure_save_dir() -> Option<PathBuf> {
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct Settings {
     pub sound_enabled: bool,
+    pub auto_restart: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -79,6 +80,11 @@ impl Settings {
 
     pub fn toggle_sound(&mut self) {
         self.sound_enabled = !self.sound_enabled;
+        self.save();
+    }
+
+    pub fn toggle_auto_restart(&mut self) {
+        self.auto_restart = !self.auto_restart;
         self.save();
     }
 
@@ -152,5 +158,10 @@ mod tests {
     #[test]
     fn settings_default_sound_disabled() {
         assert!(!Settings::default().sound_enabled);
+    }
+
+    #[test]
+    fn settings_default_auto_restart_disabled() {
+        assert!(!Settings::default().auto_restart);
     }
 }

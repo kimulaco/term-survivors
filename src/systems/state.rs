@@ -34,15 +34,20 @@ pub struct App {
 
 impl App {
     pub fn new(field_width: i32, field_height: i32) -> Self {
-        Self {
+        let has_session = GameSaveData::exists();
+        let mut app = Self {
             phase: AppPhase::Title,
             game: GameState::new(field_width, field_height),
             save: Settings::load(),
-            has_session: GameSaveData::exists(),
+            has_session,
             dx: 0,
             dy: 0,
             screen_shake_ticks: 0,
+        };
+        if has_session && app.save.auto_restart {
+            app.resume_game();
         }
+        app
     }
 
     pub fn screen_shake_offset(&self) -> (i32, i32) {
@@ -108,6 +113,10 @@ impl App {
         self.save.toggle_sound();
     }
 
+    pub fn toggle_auto_restart(&mut self) {
+        self.save.toggle_auto_restart();
+    }
+
     pub fn pause(&mut self) {
         if matches!(self.phase, AppPhase::Playing) {
             self.phase = AppPhase::Paused;
@@ -137,11 +146,19 @@ impl App {
                 }
                 TickOutcome::GameOver => {
                     GameSaveData::delete();
-                    self.phase = AppPhase::GameOver;
+                    if self.save.auto_restart {
+                        self.start_game();
+                    } else {
+                        self.phase = AppPhase::GameOver;
+                    }
                 }
                 TickOutcome::Cleared => {
                     GameSaveData::delete();
-                    self.phase = AppPhase::Cleared;
+                    if self.save.auto_restart {
+                        self.start_game();
+                    } else {
+                        self.phase = AppPhase::Cleared;
+                    }
                 }
             }
         }
@@ -179,6 +196,7 @@ mod tests {
     #[test]
     fn pause_only_from_playing() {
         let mut app = App::new(40, 24);
+        app.phase = AppPhase::Title;
         app.pause();
         assert!(matches!(app.phase, AppPhase::Title));
         app.phase = AppPhase::Playing;

@@ -72,6 +72,11 @@ fn draw_title(frame: &mut Frame, area: Rect, app: &App) {
     } else {
         "║   [V] Sound: OFF                   ║"
     };
+    let auto_restart_line = if app.save.auto_restart {
+        "║   [A] Auto-Restart: ON             ║"
+    } else {
+        "║   [A] Auto-Restart: OFF            ║"
+    };
 
     let mut title_art = vec![
         "╔════════════════════════════════════╗",
@@ -86,7 +91,10 @@ fn draw_title(frame: &mut Frame, area: Rect, app: &App) {
     }
     title_art.extend_from_slice(&[
         "║   Press [ESC] to Quit              ║",
+        "║                                    ║",
+        "║   Settings:                        ║",
         sound_line,
+        auto_restart_line,
         "║                                    ║",
         "║   Controls:                        ║",
         "║   WASD - Move                      ║",
@@ -180,7 +188,7 @@ fn draw_game(frame: &mut Frame, area: Rect, app: &App) {
 
     draw_status_bar(frame, chunks[0], app);
     draw_field(frame, chunks[1], app);
-    draw_controls(frame, chunks[2], app.save.sound_enabled);
+    draw_controls(frame, chunks[2]);
 }
 
 fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
@@ -395,12 +403,7 @@ fn set_cell(buf: &mut Buffer, x: u16, y: u16, ch: char, color: Color) {
     }
 }
 
-fn draw_controls(frame: &mut Frame, area: Rect, sound_enabled: bool) {
-    let sound_label = if sound_enabled {
-        "Sound:ON  "
-    } else {
-        "Sound:OFF  "
-    };
+fn draw_controls(frame: &mut Frame, area: Rect) {
     let line = Line::from(vec![
         Span::styled("[WASD] ", Style::default().fg(Color::Cyan)),
         Span::styled("Move  ", Style::default().fg(Color::Gray)),
@@ -408,8 +411,6 @@ fn draw_controls(frame: &mut Frame, area: Rect, sound_enabled: bool) {
         Span::styled("Pause  ", Style::default().fg(Color::Gray)),
         Span::styled("[M] ", Style::default().fg(Color::Cyan)),
         Span::styled("Menu  ", Style::default().fg(Color::Gray)),
-        Span::styled("[V] ", Style::default().fg(Color::Cyan)),
-        Span::styled(sound_label, Style::default().fg(Color::Gray)),
         Span::styled("[ESC] ", Style::default().fg(Color::Cyan)),
         Span::styled("Quit", Style::default().fg(Color::Gray)),
     ]);
