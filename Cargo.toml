@@ -10,7 +10,11 @@ categories = ["games", "command-line-utilities"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/kimulaco/term-survivors"
-include = ["src/**", "README.md", "LICENSE"]
+include = ["src/**", "!src/systems/simulate.rs", "README.md", "LICENSE"]
+
+[features]
+# Developer-only: not included in distributed builds
+simulate = []
 
 [dependencies]
 ratatui = "0.29"

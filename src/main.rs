@@ -50,6 +50,93 @@ fn run_clear() -> io::Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "simulate")]
+fn run_simulate(args: &[String]) -> io::Result<()> {
+    use systems::simulate::{run_all, RunConfig, RunOutcome, ALL_WEAPONS};
+
+    let mut games_per_weapon: usize = 20;
+    let mut i = 0;
+    while i < args.len() {
+        if args[i] == "--games" {
+            if let Some(n) = args.get(i + 1).and_then(|s| s.parse().ok()) {
+                games_per_weapon = n;
+                i += 1;
+            }
+        }
+        i += 1;
+    }
+
+    let cfg = RunConfig {
+        games_per_weapon,
+        ..Default::default()
+    };
+    eprintln!(
+        "Running {} games per weapon ({} total)...",
+        games_per_weapon,
+        games_per_weapon * ALL_WEAPONS.len()
+    );
+
+    let results = run_all(&cfg);
+
+    // CSV output to stdout (pipeable)
+    println!("game,starting_weapon,outcome,elapsed_sec,kill_count,final_level,final_hp,weapons");
+    for (idx, r) in results.iter().enumerate() {
+        let outcome = match r.outcome {
+            RunOutcome::GameOver => "GameOver",
+            RunOutcome::Cleared => "Cleared",
+            RunOutcome::Timeout => "Timeout",
+        };
+        let elapsed_sec = r.elapsed_ticks as f64 / 60.0;
+        let weapons_str: Vec<&str> = r.weapons.iter().map(|w| w.name()).collect();
+        println!(
+            "{},{},{},{:.1},{},{},{},\"{}\"",
+            idx + 1,
+            r.starting_weapon.name(),
+            outcome,
+            elapsed_sec,
+            r.kill_count,
+            r.final_level,
+            r.final_hp,
+            weapons_str.join("|"),
+        );
+    }
+
+    // Summary to stderr
+    eprintln!();
+    eprintln!("=== Summary by starting weapon ===");
+    eprintln!(
+        "{:<8}  {:<8}  {:>10}  {:>10}",
+        "Weapon", "Clear%", "AvgSurv(s)", "AvgKills"
+    );
+    for &weapon in &ALL_WEAPONS {
+        let wr: Vec<_> = results
+            .iter()
+            .filter(|r| r.starting_weapon == weapon)
+            .collect();
+        let n = wr.len();
+        let clears = wr
+            .iter()
+            .filter(|r| matches!(r.outcome, RunOutcome::Cleared))
+            .count();
+        let clear_pct = 100.0 * clears as f64 / n as f64;
+        let avg_sec = wr
+            .iter()
+            .map(|r| r.elapsed_ticks as f64 / 60.0)
+            .sum::<f64>()
+            / n as f64;
+        let avg_kills = wr.iter().map(|r| r.kill_count as f64).sum::<f64>() / n as f64;
+        eprintln!(
+            "{:<8}  {:>5.1}%  {:>10.0}  {:>10.0}",
+            weapon.name(),
+            clear_pct,
+            avg_sec,
+            avg_kills
+        );
+    }
+
+    Ok(())
+}
+
 fn run_game() -> io::Result<()> {
     let original_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
@@ -224,6 +311,12 @@ fn run_game() -> io::Result<()> {
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
+
+    // simulate has its own flags, handle before generic arg parsing
+    #[cfg(feature = "simulate")]
+    if args.first().map(|s| s.as_str()) == Some("simulate") {
+        return run_simulate(&args[1..]);
+    }
 
     let mut subcommand: Option<&str> = None;
     for arg in &args {
