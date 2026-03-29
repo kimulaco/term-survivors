@@ -10,7 +10,6 @@ pub enum Upgrade {
     LevelUpWeapon(usize), // index into weapons vec
     HealHp,
     MaxHpUp,
-    SpeedUp,
 }
 
 impl Upgrade {
@@ -26,7 +25,6 @@ impl Upgrade {
             }
             Upgrade::HealHp => "Heal +30 HP".to_string(),
             Upgrade::MaxHpUp => "Max HP +20".to_string(),
-            Upgrade::SpeedUp => "Speed +1".to_string(),
         }
     }
 
@@ -42,7 +40,6 @@ impl Upgrade {
             }
             Upgrade::HealHp => "Restore 30 hit points".to_string(),
             Upgrade::MaxHpUp => "Increase maximum HP by 20".to_string(),
-            Upgrade::SpeedUp => "Move faster".to_string(),
         }
     }
 }
@@ -75,8 +72,6 @@ pub fn generate_choices(weapons: &[Weapon]) -> Vec<Upgrade> {
     // Always offer utility upgrades
     pool.push(Upgrade::HealHp);
     pool.push(Upgrade::MaxHpUp);
-    pool.push(Upgrade::SpeedUp);
-
     let mut rng = rand::thread_rng();
     pool.shuffle(&mut rng);
     pool.truncate(3);
@@ -101,9 +96,6 @@ pub fn apply_upgrade(upgrade: Upgrade, weapons: &mut Vec<Weapon>, player: &mut P
         Upgrade::MaxHpUp => {
             player.max_hp += 20;
             player.hp += 20;
-        }
-        Upgrade::SpeedUp => {
-            player.speed += 1.0;
         }
     }
 }
@@ -147,7 +139,6 @@ mod tests {
             Upgrade::LevelUpWeapon(0),
             Upgrade::HealHp,
             Upgrade::MaxHpUp,
-            Upgrade::SpeedUp,
         ];
         for u in &upgrades {
             assert!(!u.description(&weapons).is_empty());
@@ -217,14 +208,5 @@ mod tests {
         apply_upgrade(Upgrade::MaxHpUp, &mut weapons, &mut player);
         assert_eq!(player.max_hp, old_max + 20);
         assert_eq!(player.hp, config::PLAYER_MAX_HP + 20);
-    }
-
-    #[test]
-    fn apply_upgrade_speed_up() {
-        let mut weapons = Vec::new();
-        let mut player = Player::new(0, 0);
-        let old_speed = player.speed;
-        apply_upgrade(Upgrade::SpeedUp, &mut weapons, &mut player);
-        assert!((player.speed - old_speed - 1.0).abs() < f64::EPSILON);
     }
 }

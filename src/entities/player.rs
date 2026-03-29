@@ -8,7 +8,6 @@ pub struct Player {
     pub y: i32,
     pub hp: i32,
     pub max_hp: i32,
-    pub speed: f64,
     pub(crate) invincible_ticks: u32,
 }
 
@@ -19,7 +18,6 @@ impl Player {
             y,
             hp: config::PLAYER_MAX_HP,
             max_hp: config::PLAYER_MAX_HP,
-            speed: config::PLAYER_SPEED,
             invincible_ticks: 0,
         }
     }
