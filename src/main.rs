@@ -211,6 +211,7 @@ fn run_game() -> io::Result<()> {
                                 KeyCode::Char('2') => app.select_starting_weapon(1),
                                 KeyCode::Char('3') => app.select_starting_weapon(2),
                                 KeyCode::Char('4') => app.select_starting_weapon(3),
+                                KeyCode::Char('5') => app.select_starting_weapon(4),
                                 KeyCode::Char('m') => app.phase = AppPhase::Title,
                                 KeyCode::Char('v') => app.toggle_sound(),
                                 KeyCode::Esc => app.phase = AppPhase::Title,

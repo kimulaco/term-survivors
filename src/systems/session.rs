@@ -156,12 +156,14 @@ impl GameState {
 
         // Fire weapons
         self.projectile_buf.clear();
+        let facing = self.player.facing;
         for weapon in &mut self.weapons {
             weapon.update(
                 self.player.x,
                 self.player.y,
                 &mut self.projectile_buf,
                 &self.enemy_pos_buf,
+                facing,
             );
         }
         self.projectiles.append(&mut self.projectile_buf);

@@ -3,6 +3,7 @@ use std::f64::consts::PI;
 use serde::{Deserialize, Serialize};
 
 use crate::config::{self, WeaponFireConfig};
+use crate::entities::player::FacingDir;
 use crate::entities::projectile::{self, Movement, Projectile};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -11,6 +12,7 @@ pub enum WeaponKind {
     Laser,
     Drone,
     Bomb,
+    Scatter,
 }
 
 impl WeaponKind {
@@ -20,6 +22,7 @@ impl WeaponKind {
             WeaponKind::Laser => &config::WEAPON_LASER,
             WeaponKind::Drone => &config::WEAPON_DRONE,
             WeaponKind::Bomb => &config::WEAPON_BOMB,
+            WeaponKind::Scatter => &config::WEAPON_SCATTER,
         }
     }
 
@@ -31,13 +34,14 @@ impl WeaponKind {
         self.stats().description
     }
 
-    /// Index into weapon hit cooldown table (Orbit=0, Laser=1, Drone=2, Bomb=3).
+    /// Index into weapon hit cooldown table (Orbit=0, Laser=1, Drone=2, Bomb=3, Scatter=4).
     pub fn idx(&self) -> u8 {
         match self {
             WeaponKind::Orbit => 0,
             WeaponKind::Laser => 1,
             WeaponKind::Drone => 2,
             WeaponKind::Bomb => 3,
+            WeaponKind::Scatter => 4,
         }
     }
 }
@@ -49,6 +53,7 @@ pub enum WeaponState {
     Laser,
     Drone,
     Bomb,
+    Scatter,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -66,6 +71,7 @@ impl Weapon {
             WeaponKind::Laser => WeaponState::Laser,
             WeaponKind::Drone => WeaponState::Drone,
             WeaponKind::Bomb => WeaponState::Bomb,
+            WeaponKind::Scatter => WeaponState::Scatter,
         };
         Self {
             kind,
@@ -100,6 +106,7 @@ impl Weapon {
         player_y: i32,
         projectiles: &mut Vec<Projectile>,
         enemies: &[(u64, i32, i32)],
+        facing: FacingDir,
     ) {
         if self.cooldown_timer > 0 {
             self.cooldown_timer -= 1;
@@ -131,6 +138,7 @@ impl Weapon {
             WeaponKind::Laser => self.fire_laser(player_x, player_y, projectiles),
             WeaponKind::Drone => self.fire_drone(player_x, player_y, projectiles, enemies),
             WeaponKind::Bomb => self.fire_bomb(player_x, player_y, projectiles),
+            WeaponKind::Scatter => self.fire_scatter(player_x, player_y, projectiles, facing),
         }
     }
 
@@ -280,6 +288,54 @@ impl Weapon {
         }
     }
 
+    fn fire_scatter(
+        &self,
+        player_x: i32,
+        player_y: i32,
+        projectiles: &mut Vec<Projectile>,
+        facing: FacingDir,
+    ) {
+        let WeaponFireConfig::Scatter { spread, ttl } = config::WEAPON_SCATTER.fire else {
+            return;
+        };
+        let dmg = self.damage();
+        let idx = self.kind.idx();
+        // Spread grows with level: Lv1→3 wide, Lv3→5 wide, Lv5→7 wide.
+        let effective_spread = spread + (self.level as i32 - 1) / 2;
+
+        let (dx, dy) = facing.to_dir();
+        let glyph = match (dx, dy) {
+            (1, 0) => '>',
+            (-1, 0) => '<',
+            (0, -1) => '^',
+            (0, 1) => 'v',
+            _ => '*',
+        };
+        // Vertical shots travel 2× farther visually per tick due to terminal cell aspect ratio.
+        let effective_ttl = if dx == 0 {
+            (ttl as f64 * config::TERMINAL_Y_ASPECT).round() as u32
+        } else {
+            ttl
+        };
+
+        for offset in -effective_spread..=effective_spread {
+            // Perpendicular offset: horizontal travel → offset Y, vertical travel → offset X.
+            let (ox, oy) = if dy == 0 { (0, offset) } else { (offset, 0) };
+            projectiles.push(
+                Projectile::new(
+                    player_x + ox,
+                    player_y + oy,
+                    glyph,
+                    dmg,
+                    effective_ttl,
+                    Movement::Linear { dx, dy },
+                    1,
+                )
+                .with_weapon_kind(idx),
+            );
+        }
+    }
+
     fn fire_bomb(&self, player_x: i32, player_y: i32, projectiles: &mut Vec<Projectile>) {
         let WeaponFireConfig::Bomb {
             radius,
@@ -390,7 +446,7 @@ mod tests {
         let mut w = Weapon::new(WeaponKind::Laser);
         w.cooldown_timer = 10;
         let mut projectiles = Vec::new();
-        w.update(5, 5, &mut projectiles, &[]);
+        w.update(5, 5, &mut projectiles, &[], FacingDir::Right);
         assert!(projectiles.is_empty());
         assert_eq!(w.cooldown_timer, 9);
     }
@@ -400,7 +456,7 @@ mod tests {
         let mut w = Weapon::new(WeaponKind::Laser);
         w.cooldown_timer = 0;
         let mut projectiles = Vec::new();
-        w.update(5, 5, &mut projectiles, &[]);
+        w.update(5, 5, &mut projectiles, &[], FacingDir::Right);
         assert!(!projectiles.is_empty(), "should fire projectiles");
         assert!(w.cooldown_timer > 0, "cooldown should be set after firing");
     }
@@ -409,7 +465,7 @@ mod tests {
     fn orbit_fires_projectiles() {
         let mut w = Weapon::new(WeaponKind::Orbit);
         let mut projectiles = Vec::new();
-        w.update(10, 10, &mut projectiles, &[]);
+        w.update(10, 10, &mut projectiles, &[], FacingDir::Right);
         let (base_count, width, height) = if let WeaponFireConfig::Orbit {
             base_count,
             width,
@@ -430,13 +486,13 @@ mod tests {
     fn drone_fires_correct_count() {
         let mut w = Weapon::new(WeaponKind::Drone);
         let mut projectiles = Vec::new();
-        w.update(10, 10, &mut projectiles, &[]);
+        w.update(10, 10, &mut projectiles, &[], FacingDir::Right);
         assert_eq!(projectiles.len(), 1);
 
         w.level_up();
         w.cooldown_timer = 0;
         projectiles.clear();
-        w.update(10, 10, &mut projectiles, &[]);
+        w.update(10, 10, &mut projectiles, &[], FacingDir::Right);
         assert_eq!(projectiles.len(), 2);
     }
 
@@ -444,7 +500,7 @@ mod tests {
     fn bomb_fires_fuse_and_explosion_projectiles() {
         let mut w = Weapon::new(WeaponKind::Bomb);
         let mut projectiles = Vec::new();
-        w.update(10, 10, &mut projectiles, &[]);
+        w.update(10, 10, &mut projectiles, &[], FacingDir::Right);
         // 1 fuse indicator + N explosion cells
         let fuse_count = projectiles.iter().filter(|p| p.glyph == 'o').count();
         let explosion_count = projectiles.iter().filter(|p| p.glyph == '*').count();

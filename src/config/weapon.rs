@@ -25,6 +25,11 @@ pub enum WeaponFireConfig {
         fuse_ticks: u32,
         fuse_reduction_per_level: u32,
     },
+    Scatter {
+        /// Half-width of the spread (total = 2*spread+1 shots perpendicular to travel).
+        spread: i32,
+        ttl: u32,
+    },
 }
 
 /// Unified weapon stat block used for all weapon kinds.
@@ -89,12 +94,22 @@ pub const WEAPON_BOMB: WeaponStats = WeaponStats {
     },
 };
 
-/// Returns the hit cooldown for a weapon by its kind index (Orbit=0, Laser=1, Drone=2, Bomb=3).
+pub const WEAPON_SCATTER: WeaponStats = WeaponStats {
+    name: "Scatter",
+    description: "Fires a spread of shots in the facing direction",
+    damage_table: [16, 22, 29, 38, 49],
+    cooldown: CooldownConfig(12),
+    hit_cooldown: 5,
+    fire: WeaponFireConfig::Scatter { spread: 2, ttl: 15 },
+};
+
+/// Returns the hit cooldown for a weapon by its kind index (Orbit=0, Laser=1, Drone=2, Bomb=3, Scatter=4).
 pub fn weapon_hit_cooldown(weapon_kind_idx: usize) -> u32 {
     match weapon_kind_idx {
         0 => WEAPON_ORBIT.hit_cooldown,
         1 => WEAPON_LASER.hit_cooldown,
         2 => WEAPON_DRONE.hit_cooldown,
-        _ => WEAPON_BOMB.hit_cooldown,
+        3 => WEAPON_BOMB.hit_cooldown,
+        _ => WEAPON_SCATTER.hit_cooldown,
     }
 }

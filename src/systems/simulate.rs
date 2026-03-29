@@ -93,6 +93,7 @@ fn ai_move(gs: &GameState) -> (i32, i32) {
     let fh = gs.field_height as f64;
     let has_laser = gs.weapons.iter().any(|w| w.kind == WeaponKind::Laser);
     let has_bomb = gs.weapons.iter().any(|w| w.kind == WeaponKind::Bomb);
+    let has_scatter = gs.weapons.iter().any(|w| w.kind == WeaponKind::Scatter);
 
     let mut fx = 0.0f64;
     let mut fy = 0.0f64;
@@ -150,6 +151,36 @@ fn ai_move(gs: &GameState) -> (i32, i32) {
         fy = fy2;
     }
 
+    // Scatter standoff: move toward the nearest enemy when too far away so that
+    // the player's facing direction points at enemies and shots connect.
+    // - Beyond engage_dist: attraction pulls player toward enemy (sets FacingDir).
+    // - Within safe_dist: repulsion already handles escape; no attraction.
+    if has_scatter {
+        let scatter_safe_dist = 7.0_f64;
+        let scatter_engage_dist = 14.0_f64;
+
+        if let Some(nearest) = gs.enemies.iter().min_by_key(|e| {
+            let dx = e.x as f64 - px;
+            let dy = (e.y as f64 - py) * 0.5;
+            ((dx * dx + dy * dy) * 1000.0) as i64
+        }) {
+            let edx = nearest.x as f64 - px;
+            let edy = nearest.y as f64 - py;
+            let adx = edx;
+            let ady = edy * 0.5;
+            let dist = (adx * adx + ady * ady).sqrt().max(0.1);
+
+            if dist > scatter_safe_dist {
+                // Attract strength scales from 0 at safe_dist up to 8 at engage_dist.
+                let t = ((dist - scatter_safe_dist) / (scatter_engage_dist - scatter_safe_dist))
+                    .min(1.0);
+                let attract = t * 8.0;
+                fx += edx / dist * attract;
+                fy += edy / dist * attract;
+            }
+        }
+    }
+
     // Soft wall repulsion: push away from edges within a margin
     let wall_margin = 6.0;
     let wall_strength = 4.0;
@@ -169,8 +200,22 @@ fn ai_move(gs: &GameState) -> (i32, i32) {
         0
     };
 
-    // No force: drift toward center to avoid getting stuck
+    // No force: keep moving to avoid getting stuck.
+    // Scatter: drift toward the nearest enemy so FacingDir stays updated.
+    // Others: drift toward center.
     if dx == 0 && dy == 0 {
+        if has_scatter {
+            if let Some(nearest) = gs.enemies.iter().min_by_key(|e| {
+                let dx = e.x as f64 - px;
+                let dy = (e.y as f64 - py) * 0.5;
+                ((dx * dx + dy * dy) * 1000.0) as i64
+            }) {
+                return (
+                    (nearest.x - gs.player.x).signum(),
+                    (nearest.y - gs.player.y).signum(),
+                );
+            }
+        }
         return (
             (gs.field_width / 2 - gs.player.x).signum(),
             (gs.field_height / 2 - gs.player.y).signum(),
@@ -235,11 +280,12 @@ pub fn run_single(cfg: &RunConfig, starting_weapon: WeaponKind) -> RunResult {
     }
 }
 
-pub const ALL_WEAPONS: [WeaponKind; 4] = [
+pub const ALL_WEAPONS: [WeaponKind; 5] = [
     WeaponKind::Orbit,
     WeaponKind::Laser,
     WeaponKind::Drone,
     WeaponKind::Bomb,
+    WeaponKind::Scatter,
 ];
 
 pub fn run_all(cfg: &RunConfig) -> Vec<RunResult> {

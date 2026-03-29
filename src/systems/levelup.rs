@@ -62,6 +62,7 @@ pub fn generate_choices(weapons: &[Weapon]) -> Vec<Upgrade> {
             WeaponKind::Laser,
             WeaponKind::Drone,
             WeaponKind::Bomb,
+            WeaponKind::Scatter,
         ] {
             if !existing.contains(kind) {
                 pool.push(Upgrade::NewWeapon(*kind));

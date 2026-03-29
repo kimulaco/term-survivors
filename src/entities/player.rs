@@ -2,6 +2,47 @@ use crate::audio;
 use crate::config;
 use serde::{Deserialize, Serialize};
 
+/// The 4 cardinal directions the player can face.
+/// Diagonal inputs snap to the dominant axis (ties prefer horizontal).
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum FacingDir {
+    Right,
+    Left,
+    Down,
+    Up,
+}
+
+impl FacingDir {
+    pub fn from_input(dx: i32, dy: i32) -> Option<Self> {
+        if dx == 0 && dy == 0 {
+            return None;
+        }
+        if dx.abs() >= dy.abs() {
+            match dx.signum() {
+                1 => Some(FacingDir::Right),
+                -1 => Some(FacingDir::Left),
+                _ => None,
+            }
+        } else {
+            match dy.signum() {
+                1 => Some(FacingDir::Down),
+                -1 => Some(FacingDir::Up),
+                _ => None,
+            }
+        }
+    }
+
+    /// Returns the (dx, dy) unit vector for this direction.
+    pub fn to_dir(self) -> (i32, i32) {
+        match self {
+            FacingDir::Right => (1, 0),
+            FacingDir::Left => (-1, 0),
+            FacingDir::Down => (0, 1),
+            FacingDir::Up => (0, -1),
+        }
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Player {
     pub x: i32,
@@ -9,6 +50,7 @@ pub struct Player {
     pub hp: i32,
     pub max_hp: i32,
     pub(crate) invincible_ticks: u32,
+    pub facing: FacingDir,
 }
 
 impl Player {
@@ -19,12 +61,17 @@ impl Player {
             hp: config::PLAYER_MAX_HP,
             max_hp: config::PLAYER_MAX_HP,
             invincible_ticks: 0,
+            facing: FacingDir::Right,
         }
     }
 
     pub fn update(&mut self, dx: i32, dy: i32, width: i32, height: i32) {
         if self.invincible_ticks > 0 {
             self.invincible_ticks -= 1;
+        }
+
+        if let Some(dir) = FacingDir::from_input(dx, dy) {
+            self.facing = dir;
         }
 
         if dx != 0 {
