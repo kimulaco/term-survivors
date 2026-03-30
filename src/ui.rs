@@ -51,7 +51,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
         AppPhase::Playing => draw_game(frame, size, app),
         AppPhase::Paused => {
             draw_game(frame, size, app);
-            draw_pause_overlay(frame, size);
+            draw_pause_overlay(frame, size, app);
         }
         AppPhase::LevelUp(choices, idx) => {
             draw_game(frame, size, app);
@@ -536,7 +536,7 @@ fn draw_levelup(
     frame.render_widget(popup, popup_area);
 }
 
-fn draw_pause_overlay(frame: &mut Frame, area: Rect) {
+fn draw_pause_overlay(frame: &mut Frame, area: Rect, app: &App) {
     let max_w = (config::MAX_FIELD_WIDTH as u16 + 2).min(area.width);
     let max_h = (config::MAX_FIELD_HEIGHT as u16 + 2)
         .min(area.height.saturating_sub(config::STATUS_BAR_HEIGHT));
@@ -553,11 +553,12 @@ fn draw_pause_overlay(frame: &mut Frame, area: Rect) {
     let inner = block.inner(arena_area);
     frame.render_widget(block, arena_area);
 
-    let msg_height = 3u16;
+    let weapons = &app.game.weapons;
+    let msg_height = 3u16 + config::MAX_WEAPONS as u16 + 2;
     let msg_y = inner.y + inner.height.saturating_sub(msg_height) / 2;
     let msg_area = Rect::new(inner.x, msg_y, inner.width, msg_height);
 
-    let lines = vec![
+    let mut lines = vec![
         Line::from(Span::styled(
             "PAUSED",
             Style::default()
@@ -566,10 +567,33 @@ fn draw_pause_overlay(frame: &mut Frame, area: Rect) {
         )),
         Line::from(""),
         Line::from(Span::styled(
-            "[SPACE] Restart  [ESC] Quit",
-            Style::default().fg(Color::Cyan),
+            "WEAPONS",
+            Style::default()
+                .fg(Color::White)
+                .add_modifier(Modifier::BOLD),
         )),
     ];
+
+    for i in 0..config::MAX_WEAPONS {
+        if let Some(w) = weapons.get(i) {
+            let max_level = w.kind.stats().damage_table.len();
+            lines.push(Line::from(Span::styled(
+                format!("{}  Lv {}/{}", w.kind.name(), w.level, max_level),
+                Style::default().fg(Color::Green),
+            )));
+        } else {
+            lines.push(Line::from(Span::styled(
+                "--- empty ---",
+                Style::default().fg(Color::DarkGray),
+            )));
+        }
+    }
+
+    lines.push(Line::from(""));
+    lines.push(Line::from(Span::styled(
+        "[SPACE] Restart  [ESC] Quit",
+        Style::default().fg(Color::Cyan),
+    )));
 
     let para = Paragraph::new(lines).alignment(Alignment::Center);
     frame.render_widget(para, msg_area);
