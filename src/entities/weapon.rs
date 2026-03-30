@@ -37,6 +37,17 @@ impl WeaponKind {
         self.stats().description
     }
 
+    pub fn abbr(&self) -> &'static str {
+        match self {
+            WeaponKind::Orbit => "Or",
+            WeaponKind::Laser => "La",
+            WeaponKind::Drone => "Dr",
+            WeaponKind::Bomb => "Bo",
+            WeaponKind::Scatter => "Sc",
+            WeaponKind::Thunder => "Th",
+        }
+    }
+
     /// Index into weapon hit cooldown table (Orbit=0, Laser=1, Drone=2, Bomb=3, Scatter=4, Thunder=5).
     pub fn idx(&self) -> u8 {
         match self {

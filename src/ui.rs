@@ -198,8 +198,12 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
 
     let rows = Layout::vertical([Constraint::Length(3), Constraint::Length(3)]).split(area);
 
-    let top_chunks =
-        Layout::horizontal([Constraint::Percentage(40), Constraint::Percentage(60)]).split(rows[0]);
+    let top_chunks = Layout::horizontal([
+        Constraint::Min(0),
+        Constraint::Length(9),
+        Constraint::Min(0),
+    ])
+    .split(rows[0]);
 
     // HP bar
     let hp_ratio = player.hp as f64 / player.max_hp as f64;
@@ -226,34 +230,33 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
         ));
     frame.render_widget(hp_gauge, top_chunks[0]);
 
-    // Info
+    // Time
     let remaining = config::GAME_DURATION_TICKS.saturating_sub(game.elapsed_ticks);
     let time_str = Settings::format_ticks(remaining);
-    let weapons_str: String = game
-        .weapons
-        .iter()
-        .map(|w| format!("{}({})", w.kind.name(), w.level))
-        .collect::<Vec<_>>()
-        .join(" ");
+    let time_widget = Paragraph::new(Span::styled(
+        format!(" {}", time_str),
+        Style::default().fg(Color::Green),
+    ))
+    .block(Block::default().borders(Borders::ALL).title(" Time "));
+    frame.render_widget(time_widget, top_chunks[1]);
 
-    let info = Paragraph::new(vec![
-        Line::from(vec![
-            Span::styled(
-                format!(" Time: {}  ", time_str),
-                Style::default().fg(Color::Green),
-            ),
-            Span::styled(
-                format!("Kills:{} ", game.kill_count),
-                Style::default().fg(Color::Red),
-            ),
-        ]),
-        Line::from(Span::styled(
-            format!(" Weapons: {}", weapons_str),
-            Style::default().fg(Color::Cyan),
-        )),
-    ])
-    .block(Block::default().borders(Borders::ALL).title(" Info "));
-    frame.render_widget(info, top_chunks[1]);
+    // Weapons
+    let weapon_slots: String = (0..config::MAX_WEAPONS)
+        .map(|i| {
+            if let Some(w) = game.weapons.get(i) {
+                format!("[{}{}]", w.kind.abbr(), w.level)
+            } else {
+                "[--]".to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("");
+    let weapons_widget = Paragraph::new(Span::styled(
+        format!(" {}", weapon_slots),
+        Style::default().fg(Color::Cyan),
+    ))
+    .block(Block::default().borders(Borders::ALL).title(" Weapons "));
+    frame.render_widget(weapons_widget, top_chunks[2]);
 
     // XP gauge (full width, below HP & Info)
     let xp_threshold = game.xp_threshold();
