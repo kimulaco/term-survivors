@@ -16,7 +16,7 @@ use crossterm::ExecutableCommand;
 use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 
-use systems::state::{App, AppPhase, WEAPON_CHOICES};
+use systems::state::{App, AppPhase};
 
 fn print_help() {
     println!("term-survivors {}", env!("CARGO_PKG_VERSION"));
@@ -195,14 +195,20 @@ fn run_game() -> io::Result<()> {
                             }
                             _ => {}
                         },
-                        AppPhase::WeaponSelect(idx) => {
-                            let len = WEAPON_CHOICES.len();
+                        AppPhase::WeaponSelect(choices, idx) => {
+                            let len = choices.len();
                             match key.code {
                                 KeyCode::Char('w') | KeyCode::Up => {
-                                    app.phase = AppPhase::WeaponSelect(idx.saturating_sub(1))
+                                    app.phase = AppPhase::WeaponSelect(
+                                        choices.clone(),
+                                        idx.saturating_sub(1),
+                                    )
                                 }
                                 KeyCode::Char('s') | KeyCode::Down => {
-                                    app.phase = AppPhase::WeaponSelect((idx + 1).min(len - 1))
+                                    app.phase = AppPhase::WeaponSelect(
+                                        choices.clone(),
+                                        (idx + 1).min(len - 1),
+                                    )
                                 }
                                 KeyCode::Char(' ') | KeyCode::Enter => {
                                     app.select_starting_weapon(*idx)
@@ -210,9 +216,6 @@ fn run_game() -> io::Result<()> {
                                 KeyCode::Char('1') => app.select_starting_weapon(0),
                                 KeyCode::Char('2') => app.select_starting_weapon(1),
                                 KeyCode::Char('3') => app.select_starting_weapon(2),
-                                KeyCode::Char('4') => app.select_starting_weapon(3),
-                                KeyCode::Char('5') => app.select_starting_weapon(4),
-                                KeyCode::Char('6') => app.select_starting_weapon(5),
                                 KeyCode::Char('m') => app.phase = AppPhase::Title,
                                 KeyCode::Char('v') => app.toggle_sound(),
                                 KeyCode::Esc => app.phase = AppPhase::Title,

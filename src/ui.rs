@@ -7,8 +7,9 @@ use ratatui::Frame;
 
 use crate::config;
 use crate::entities::enemy::{Enemy, EnemyKind};
+use crate::entities::weapon::WeaponKind;
 use crate::save::Settings;
-use crate::systems::state::{App, AppPhase, WEAPON_CHOICES};
+use crate::systems::state::{App, AppPhase};
 
 /// Distinct colors per enemy kind — all in red/orange/purple/pink/brown range.
 fn enemy_color(kind: EnemyKind) -> Color {
@@ -43,9 +44,9 @@ pub fn draw(frame: &mut Frame, app: &App) {
 
     match &app.phase {
         AppPhase::Title => draw_title(frame, size, app),
-        AppPhase::WeaponSelect(idx) => {
+        AppPhase::WeaponSelect(choices, idx) => {
             draw_game(frame, size, app);
-            draw_weapon_select(frame, size, *idx);
+            draw_weapon_select(frame, size, choices, *idx);
         }
         AppPhase::Playing => draw_game(frame, size, app),
         AppPhase::Paused => {
@@ -120,9 +121,9 @@ fn draw_title(frame: &mut Frame, area: Rect, app: &App) {
     frame.render_widget(paragraph, area);
 }
 
-fn draw_weapon_select(frame: &mut Frame, area: Rect, selected: usize) {
+fn draw_weapon_select(frame: &mut Frame, area: Rect, choices: &[WeaponKind], selected: usize) {
     let popup_width = 44u16;
-    let popup_height = (3 + WEAPON_CHOICES.len() * 3) as u16;
+    let popup_height = (3 + choices.len() * 3) as u16;
     let x = area.x + (area.width.saturating_sub(popup_width)) / 2;
     let y = area.y + config::STATUS_BAR_HEIGHT + 2;
     let popup_area = Rect::new(x, y, popup_width, popup_height);
@@ -139,7 +140,7 @@ fn draw_weapon_select(frame: &mut Frame, area: Rect, selected: usize) {
         Line::from(""),
     ];
 
-    for (i, kind) in WEAPON_CHOICES.iter().enumerate() {
+    for (i, kind) in choices.iter().enumerate() {
         let (prefix, name_color) = if i == selected {
             (">", Color::Yellow)
         } else {

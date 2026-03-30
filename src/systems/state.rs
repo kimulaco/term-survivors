@@ -4,8 +4,9 @@ use crate::entities::weapon::WeaponKind;
 use crate::save::{GameSaveData, Settings};
 use crate::systems::levelup::Upgrade;
 use crate::systems::session::{GameState, TickOutcome};
+use rand::seq::SliceRandom;
 
-pub const WEAPON_CHOICES: [WeaponKind; 6] = [
+const ALL_WEAPONS: [WeaponKind; 6] = [
     WeaponKind::Orbit,
     WeaponKind::Laser,
     WeaponKind::Drone,
@@ -16,7 +17,7 @@ pub const WEAPON_CHOICES: [WeaponKind; 6] = [
 
 pub enum AppPhase {
     Title,
-    WeaponSelect(usize),
+    WeaponSelect(Vec<WeaponKind>, usize),
     Playing,
     Paused,
     LevelUp(Vec<Upgrade>, usize),
@@ -73,13 +74,18 @@ impl App {
         GameSaveData::delete();
         self.has_session = false;
         self.game = GameState::new(self.game.field_width, self.game.field_height);
-        self.phase = AppPhase::WeaponSelect(0);
+        let mut pool: Vec<WeaponKind> = ALL_WEAPONS.to_vec();
+        pool.shuffle(&mut rand::thread_rng());
+        pool.truncate(3);
+        self.phase = AppPhase::WeaponSelect(pool, 0);
     }
 
     pub fn select_starting_weapon(&mut self, index: usize) {
-        if let Some(&kind) = WEAPON_CHOICES.get(index) {
-            self.game.add_weapon(kind);
-            self.phase = AppPhase::Playing;
+        if let AppPhase::WeaponSelect(choices, _) = &self.phase {
+            if let Some(&kind) = choices.get(index) {
+                self.game.add_weapon(kind);
+                self.phase = AppPhase::Playing;
+            }
         }
     }
 
