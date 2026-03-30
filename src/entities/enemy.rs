@@ -37,9 +37,9 @@ pub struct Enemy {
     pub knockback_dx: i32,
     #[serde(default)]
     pub knockback_dy: i32,
-    /// Per-weapon-kind hit cooldown ticks [Orbit, Laser, Drone, Bomb]
+    /// Per-weapon-kind hit cooldown ticks [Orbit=0, Laser=1, Drone=2, Bomb=3, Scatter=4, Thunder=5]
     #[serde(default)]
-    pub hit_cooldowns: [u32; 5],
+    pub hit_cooldowns: [u32; 6],
 }
 
 impl Enemy {
@@ -72,7 +72,7 @@ impl Enemy {
             knockback_ticks: 0,
             knockback_dx: 0,
             knockback_dy: 0,
-            hit_cooldowns: [0; 5],
+            hit_cooldowns: [0; 6],
         }
     }
 

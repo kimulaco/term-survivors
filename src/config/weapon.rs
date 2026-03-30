@@ -30,6 +30,16 @@ pub enum WeaponFireConfig {
         spread: i32,
         ttl: u32,
     },
+    Thunder {
+        /// Base ticks before lightning strikes after warning appears.
+        warn_ticks: u32,
+        /// Reduction to warn_ticks per level above 1.
+        warn_reduction_per_level: u32,
+        /// Jitter radius at level 1 (narrows at higher levels).
+        base_jitter: i32,
+        /// Blast radius of the circular strike area at level 1 (scales +1 per 2 levels).
+        base_radius: i32,
+    },
 }
 
 /// Unified weapon stat block used for all weapon kinds.
@@ -103,13 +113,28 @@ pub const WEAPON_SCATTER: WeaponStats = WeaponStats {
     fire: WeaponFireConfig::Scatter { spread: 2, ttl: 15 },
 };
 
-/// Returns the hit cooldown for a weapon by its kind index (Orbit=0, Laser=1, Drone=2, Bomb=3, Scatter=4).
+pub const WEAPON_THUNDER: WeaponStats = WeaponStats {
+    name: "Thunder",
+    description: "Calls lightning strikes near enemies",
+    damage_table: [30, 42, 56, 72, 90],
+    cooldown: CooldownConfig(90),
+    hit_cooldown: 20,
+    fire: WeaponFireConfig::Thunder {
+        warn_ticks: 45,
+        warn_reduction_per_level: 3,
+        base_jitter: 2,
+        base_radius: 2,
+    },
+};
+
+/// Returns the hit cooldown for a weapon by its kind index (Orbit=0, Laser=1, Drone=2, Bomb=3, Scatter=4, Thunder=5).
 pub fn weapon_hit_cooldown(weapon_kind_idx: usize) -> u32 {
     match weapon_kind_idx {
         0 => WEAPON_ORBIT.hit_cooldown,
         1 => WEAPON_LASER.hit_cooldown,
         2 => WEAPON_DRONE.hit_cooldown,
         3 => WEAPON_BOMB.hit_cooldown,
-        _ => WEAPON_SCATTER.hit_cooldown,
+        4 => WEAPON_SCATTER.hit_cooldown,
+        _ => WEAPON_THUNDER.hit_cooldown,
     }
 }

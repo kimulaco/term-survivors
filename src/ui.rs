@@ -308,8 +308,38 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
     let (sdx, sdy) = app.screen_shake_offset();
 
     for proj in &game.projectiles {
+        // Thunder warning indicator (damage=0, weapon_kind_idx=5): 3-phase blink
+        let (glyph, color) = if proj.damage == 0 && proj.weapon_kind_idx == 5 {
+            let period: u32 = if proj.ttl > 30 {
+                8
+            } else if proj.ttl > 15 {
+                5
+            } else {
+                3
+            };
+            if proj.ttl % period >= period / 2 {
+                (' ', Color::Reset)
+            } else if proj.ttl > 30 {
+                ('?', Color::Yellow)
+            } else if proj.ttl > 15 {
+                ('!', Color::LightYellow)
+            } else {
+                ('#', Color::LightRed)
+            }
+        } else if proj.weapon_kind_idx == 5 && proj.delay_ticks > 0 {
+            // Thunder strike cell during warn phase: preview
+            if proj.delay_ticks > 30 {
+                ('.', Color::DarkGray)
+            } else if proj.delay_ticks > 15 {
+                ('.', Color::Gray)
+            } else {
+                ('.', Color::Yellow)
+            }
+        } else if proj.weapon_kind_idx == 5 {
+            // Thunder strike (active)
+            (proj.glyph, Color::White)
         // Fuse indicator (damage=0, weapon_kind_idx=3): blink + phase change
-        let (glyph, color) = if proj.damage == 0 && proj.weapon_kind_idx == 3 {
+        } else if proj.damage == 0 && proj.weapon_kind_idx == 3 {
             let period: u32 = if proj.ttl > 60 {
                 16
             } else if proj.ttl > 30 {
@@ -340,9 +370,10 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
             (proj.glyph, Color::Yellow)
         } else {
             let c = match proj.weapon_kind_idx {
-                0 => Color::LightBlue, // Orbit
-                1 => Color::Yellow,    // Laser
-                2 => Color::Cyan,      // Drone
+                0 => Color::LightBlue,  // Orbit
+                1 => Color::Yellow,     // Laser
+                2 => Color::Cyan,       // Drone
+                4 => Color::LightGreen, // Scatter
                 _ => Color::LightBlue,
             };
             (proj.glyph, c)

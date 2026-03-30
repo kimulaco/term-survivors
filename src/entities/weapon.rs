@@ -1,5 +1,6 @@
 use std::f64::consts::PI;
 
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 use crate::config::{self, WeaponFireConfig};
@@ -13,6 +14,7 @@ pub enum WeaponKind {
     Drone,
     Bomb,
     Scatter,
+    Thunder,
 }
 
 impl WeaponKind {
@@ -23,6 +25,7 @@ impl WeaponKind {
             WeaponKind::Drone => &config::WEAPON_DRONE,
             WeaponKind::Bomb => &config::WEAPON_BOMB,
             WeaponKind::Scatter => &config::WEAPON_SCATTER,
+            WeaponKind::Thunder => &config::WEAPON_THUNDER,
         }
     }
 
@@ -34,7 +37,7 @@ impl WeaponKind {
         self.stats().description
     }
 
-    /// Index into weapon hit cooldown table (Orbit=0, Laser=1, Drone=2, Bomb=3, Scatter=4).
+    /// Index into weapon hit cooldown table (Orbit=0, Laser=1, Drone=2, Bomb=3, Scatter=4, Thunder=5).
     pub fn idx(&self) -> u8 {
         match self {
             WeaponKind::Orbit => 0,
@@ -42,6 +45,7 @@ impl WeaponKind {
             WeaponKind::Drone => 2,
             WeaponKind::Bomb => 3,
             WeaponKind::Scatter => 4,
+            WeaponKind::Thunder => 5,
         }
     }
 }
@@ -54,6 +58,7 @@ pub enum WeaponState {
     Drone,
     Bomb,
     Scatter,
+    Thunder,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -72,6 +77,7 @@ impl Weapon {
             WeaponKind::Drone => WeaponState::Drone,
             WeaponKind::Bomb => WeaponState::Bomb,
             WeaponKind::Scatter => WeaponState::Scatter,
+            WeaponKind::Thunder => WeaponState::Thunder,
         };
         Self {
             kind,
@@ -139,6 +145,7 @@ impl Weapon {
             WeaponKind::Drone => self.fire_drone(player_x, player_y, projectiles, enemies),
             WeaponKind::Bomb => self.fire_bomb(player_x, player_y, projectiles),
             WeaponKind::Scatter => self.fire_scatter(player_x, player_y, projectiles, facing),
+            WeaponKind::Thunder => self.fire_thunder(player_x, player_y, projectiles, enemies),
         }
     }
 
@@ -336,6 +343,86 @@ impl Weapon {
         }
     }
 
+    fn fire_thunder(
+        &self,
+        player_x: i32,
+        player_y: i32,
+        projectiles: &mut Vec<Projectile>,
+        enemies: &[(u64, i32, i32)],
+    ) {
+        let WeaponFireConfig::Thunder {
+            warn_ticks,
+            warn_reduction_per_level,
+            base_jitter,
+            base_radius,
+        } = config::WEAPON_THUNDER.fire
+        else {
+            return;
+        };
+
+        let dmg = self.damage();
+        let idx = self.kind.idx();
+        let strike_count = self.level.div_ceil(2) as usize;
+        let effective_warn = warn_ticks.saturating_sub((self.level - 1) * warn_reduction_per_level);
+        let jitter = (base_jitter - (self.level as i32 - 1) / 2).max(0);
+        let radius = base_radius + (self.level as i32 - 1) / 3;
+
+        let mut rng = rand::thread_rng();
+
+        // Sort by distance to player, keep up to 3 closest as target candidates
+        let mut sorted = enemies.to_vec();
+        sorted.sort_by_key(|&(_, ex, ey)| (ex - player_x).abs() + (ey - player_y).abs());
+        let candidates = &sorted[..sorted.len().min(3)];
+
+        for _ in 0..strike_count {
+            // Target: random from 3 closest enemies, or random field position if none
+            let (base_x, base_y) = if candidates.is_empty() {
+                (
+                    rng.gen_range(0..config::MAX_FIELD_WIDTH),
+                    rng.gen_range(0..config::MAX_FIELD_HEIGHT),
+                )
+            } else {
+                let (_, ex, ey) = candidates[rng.gen_range(0..candidates.len())];
+                (ex, ey)
+            };
+            let tx = base_x
+                + if jitter > 0 {
+                    rng.gen_range(-jitter..=jitter)
+                } else {
+                    0
+                };
+            let ty = base_y
+                + if jitter > 0 {
+                    rng.gen_range(-jitter..=jitter)
+                } else {
+                    0
+                };
+
+            // Warning indicator (0 damage, visible for warn_ticks)
+            projectiles.push(
+                Projectile::new(tx, ty, '!', 0, effective_warn + 1, Movement::Static, 1)
+                    .with_weapon_kind(idx),
+            );
+
+            // Lightning strike: filled ellipse (aspect-ratio corrected), delayed
+            let r = radius as f64;
+            for dy in -radius..=radius {
+                let half_w = ((r * r - (dy as f64 * dy as f64)).max(0.0).sqrt() * 2.0) as i32;
+                for dx in -half_w..=half_w {
+                    let adx = dx as f64 * 0.5;
+                    let ady = dy as f64;
+                    if adx * adx + ady * ady <= r * r {
+                        projectiles.push(
+                            Projectile::new(tx + dx, ty + dy, '#', dmg, 4, Movement::Static, 1)
+                                .with_delay(effective_warn)
+                                .with_weapon_kind(idx),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
     fn fire_bomb(&self, player_x: i32, player_y: i32, projectiles: &mut Vec<Projectile>) {
         let WeaponFireConfig::Bomb {
             radius,
@@ -525,6 +612,56 @@ mod tests {
             w.fire_bomb(10, 10, &mut projectiles);
             let fuse_count = projectiles.iter().filter(|p| p.glyph == 'o').count();
             assert_eq!(fuse_count, 1, "Lv{} should always spawn 1 bomb", level);
+        }
+    }
+
+    #[test]
+    fn thunder_fires_randomly_when_no_enemies() {
+        let mut w = Weapon::new(WeaponKind::Thunder);
+        let mut projectiles = Vec::new();
+        w.update(5, 5, &mut projectiles, &[], FacingDir::Right);
+        assert!(!projectiles.is_empty(), "should fire even with no enemies");
+    }
+
+    #[test]
+    fn thunder_fires_warning_and_strike_projectiles() {
+        let mut w = Weapon::new(WeaponKind::Thunder);
+        let mut projectiles = Vec::new();
+        let enemies = vec![(1u64, 10i32, 10i32)];
+        w.update(5, 5, &mut projectiles, &enemies, FacingDir::Right);
+        let warn_count = projectiles
+            .iter()
+            .filter(|p| p.glyph == '!' && p.damage == 0)
+            .count();
+        let strike_count = projectiles
+            .iter()
+            .filter(|p| p.glyph == '#' && p.damage > 0)
+            .count();
+        assert_eq!(warn_count, 1, "Lv1 should produce 1 warning indicator");
+        assert!(strike_count > 0, "Lv1 should produce strike cells");
+        assert!(
+            projectiles
+                .iter()
+                .filter(|p| p.glyph == '#')
+                .all(|p| p.delay_ticks > 0),
+            "strike cells must start delayed"
+        );
+    }
+
+    #[test]
+    fn thunder_strike_count_scales_with_level() {
+        let enemies = vec![(1u64, 10i32, 10i32), (2, 20, 20), (3, 30, 30)];
+        for (level, expected_warns) in [(1u32, 1usize), (3, 2), (5, 3)] {
+            let mut w = Weapon::new(WeaponKind::Thunder);
+            w.level = level;
+            let mut projectiles = Vec::new();
+            w.fire_thunder(5, 5, &mut projectiles, &enemies);
+            let warn_count = projectiles.iter().filter(|p| p.damage == 0).count();
+            assert_eq!(
+                warn_count, expected_warns,
+                "Lv{} should have {} warning indicator(s)",
+                level, expected_warns
+            );
         }
     }
 }

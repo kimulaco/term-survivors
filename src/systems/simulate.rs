@@ -280,12 +280,13 @@ pub fn run_single(cfg: &RunConfig, starting_weapon: WeaponKind) -> RunResult {
     }
 }
 
-pub const ALL_WEAPONS: [WeaponKind; 5] = [
+pub const ALL_WEAPONS: [WeaponKind; 6] = [
     WeaponKind::Orbit,
     WeaponKind::Laser,
     WeaponKind::Drone,
     WeaponKind::Bomb,
     WeaponKind::Scatter,
+    WeaponKind::Thunder,
 ];
 
 pub fn run_all(cfg: &RunConfig) -> Vec<RunResult> {
