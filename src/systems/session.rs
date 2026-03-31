@@ -194,7 +194,7 @@ impl GameState {
 
         // Enemy-player contact
         let screen_shake =
-            combat::process_enemy_contact(&self.enemies, &mut self.player, sound_enabled);
+            combat::process_enemy_contact(&mut self.enemies, &mut self.player, sound_enabled);
 
         // Clean up expired projectiles
         self.projectiles.retain(|p| !p.is_expired() && p.pierce > 0);

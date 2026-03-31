@@ -64,11 +64,17 @@ pub fn process_combat(
 
 /// Check enemy-player collisions, apply damage.
 /// Returns the shake power of the enemy that landed a hit, or 0 if no damage was taken.
-pub fn process_enemy_contact(enemies: &[Enemy], player: &mut Player, sound_enabled: bool) -> u32 {
-    for enemy in enemies {
+pub fn process_enemy_contact(
+    enemies: &mut [Enemy],
+    player: &mut Player,
+    sound_enabled: bool,
+) -> u32 {
+    for enemy in enemies.iter_mut() {
         if enemy.collides_with_player(player.x, player.y) {
             if player.take_damage(enemy.damage, sound_enabled) {
-                return enemy.shake_power;
+                let shake = enemy.shake_power;
+                enemy.apply_knockback(player.x, player.y, 2);
+                return shake;
             }
             break; // Only take damage from one enemy per tick
         }
@@ -163,32 +169,41 @@ mod tests {
 
     #[test]
     fn process_enemy_contact_damages_player() {
-        let enemies = vec![Enemy::new(EnemyKind::Bug, 5, 5)];
+        let mut enemies = vec![Enemy::new(EnemyKind::Bug, 5, 5)];
         let mut player = Player::new(5, 5);
         let hp_before = player.hp;
 
-        process_enemy_contact(&enemies, &mut player, false);
+        process_enemy_contact(&mut enemies, &mut player, false);
         assert!(player.hp < hp_before);
     }
 
     #[test]
+    fn process_enemy_contact_knocks_back_enemy() {
+        let mut enemies = vec![Enemy::new(EnemyKind::Bug, 5, 5)];
+        let mut player = Player::new(5, 5);
+
+        process_enemy_contact(&mut enemies, &mut player, false);
+        assert!(enemies[0].knockback_ticks > 0);
+    }
+
+    #[test]
     fn process_enemy_contact_no_damage_when_invincible() {
-        let enemies = vec![Enemy::new(EnemyKind::Bug, 5, 5)];
+        let mut enemies = vec![Enemy::new(EnemyKind::Bug, 5, 5)];
         let mut player = Player::new(5, 5);
         player.invincible_ticks = 10;
         let hp_before = player.hp;
 
-        process_enemy_contact(&enemies, &mut player, false);
+        process_enemy_contact(&mut enemies, &mut player, false);
         assert_eq!(player.hp, hp_before);
     }
 
     #[test]
     fn process_enemy_contact_no_damage_when_far() {
-        let enemies = vec![Enemy::new(EnemyKind::Bug, 50, 50)];
+        let mut enemies = vec![Enemy::new(EnemyKind::Bug, 50, 50)];
         let mut player = Player::new(0, 0);
         let hp_before = player.hp;
 
-        process_enemy_contact(&enemies, &mut player, false);
+        process_enemy_contact(&mut enemies, &mut player, false);
         assert_eq!(player.hp, hp_before);
     }
 }
