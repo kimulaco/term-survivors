@@ -235,7 +235,10 @@ fn run_game() -> io::Result<()> {
                             KeyCode::Char('s') | KeyCode::Down => {
                                 dy += 1;
                             }
-                            KeyCode::Char(' ') => app.pause(),
+                            KeyCode::Char(' ') => {
+                                app.pause();
+                                break;
+                            }
                             KeyCode::Char('m') => app.return_to_title(),
                             KeyCode::Esc => {
                                 should_break = true;
@@ -244,7 +247,10 @@ fn run_game() -> io::Result<()> {
                             _ => {}
                         },
                         AppPhase::Paused => match key.code {
-                            KeyCode::Char(' ') => app.resume_from_pause(),
+                            KeyCode::Char(' ') => {
+                                app.resume_from_pause();
+                                break;
+                            }
                             KeyCode::Char('v') => app.toggle_sound(),
                             KeyCode::Esc => {
                                 should_break = true;
