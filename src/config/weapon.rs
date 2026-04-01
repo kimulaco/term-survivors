@@ -24,6 +24,8 @@ pub enum WeaponFireConfig {
         radius: i32,
         fuse_ticks: u32,
         fuse_reduction_per_level: u32,
+        /// Fuse delay added to the 2nd bomb (Lv2+) so the two explosions are staggered.
+        stagger_ticks: u32,
     },
     Scatter {
         /// Half-width of the spread (total = 2*spread+1 shots perpendicular to travel).
@@ -94,13 +96,14 @@ pub const WEAPON_DRONE: WeaponStats = WeaponStats {
 pub const WEAPON_BOMB: WeaponStats = WeaponStats {
     name: "Bomb",
     description: "Places delayed explosions; lure enemies in",
-    damage_table: [35, 50, 65, 85, 110],
+    damage_table: [35, 35, 50, 70, 95],
     cooldown: CooldownConfig(120),
     hit_cooldown: 15,
     fire: WeaponFireConfig::Bomb {
-        radius: 2,
+        radius: 3,
         fuse_ticks: 90,
         fuse_reduction_per_level: 10,
+        stagger_ticks: 60,
     },
 };
 

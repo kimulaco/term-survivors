@@ -64,10 +64,16 @@ impl WeaponKind {
 /// Per-variant runtime state for a weapon instance.
 #[derive(Clone, Serialize, Deserialize)]
 pub enum WeaponState {
-    Orbit { angle: f64 },
+    Orbit {
+        angle: f64,
+    },
     Laser,
     Drone,
-    Bomb,
+    Bomb {
+        /// Ticks remaining until the 2nd bomb is placed (Lv2+). None = no pending bomb.
+        #[serde(default)]
+        pending_bomb_timer: Option<u32>,
+    },
     Scatter,
     Thunder,
 }
@@ -86,7 +92,9 @@ impl Weapon {
             WeaponKind::Orbit => WeaponState::Orbit { angle: 0.0 },
             WeaponKind::Laser => WeaponState::Laser,
             WeaponKind::Drone => WeaponState::Drone,
-            WeaponKind::Bomb => WeaponState::Bomb,
+            WeaponKind::Bomb => WeaponState::Bomb {
+                pending_bomb_timer: None,
+            },
             WeaponKind::Scatter => WeaponState::Scatter,
             WeaponKind::Thunder => WeaponState::Thunder,
         };
@@ -110,9 +118,6 @@ impl Weapon {
 
     fn cooldown(&self) -> u32 {
         let base = self.kind.stats().cooldown.0;
-        if self.kind == WeaponKind::Bomb {
-            return base;
-        }
         let reduction = (self.level - 1) as f64 * 0.1;
         (base as f64 * (1.0 - reduction)).max(5.0) as u32
     }
@@ -125,6 +130,20 @@ impl Weapon {
         enemies: &[(u64, i32, i32)],
         facing: FacingDir,
     ) {
+        // Lv2+ Bomb: fire the 2nd bomb at the player's current position after stagger delay.
+        if let WeaponState::Bomb {
+            ref mut pending_bomb_timer,
+        } = self.state
+        {
+            if let Some(ref mut t) = *pending_bomb_timer {
+                *t -= 1;
+                if *t == 0 {
+                    *pending_bomb_timer = None;
+                    self.fire_bomb_single(player_x, player_y, projectiles);
+                }
+            }
+        }
+
         if self.cooldown_timer > 0 {
             self.cooldown_timer -= 1;
             if let (WeaponState::Orbit { angle }, WeaponFireConfig::Orbit { rotation_speed, .. }) =
@@ -154,7 +173,9 @@ impl Weapon {
             }
             WeaponKind::Laser => self.fire_laser(player_x, player_y, projectiles),
             WeaponKind::Drone => self.fire_drone(player_x, player_y, projectiles, enemies),
-            WeaponKind::Bomb => self.fire_bomb(player_x, player_y, projectiles),
+            WeaponKind::Bomb => {
+                self.fire_bomb(player_x, player_y, projectiles);
+            }
             WeaponKind::Scatter => self.fire_scatter(player_x, player_y, projectiles, facing),
             WeaponKind::Thunder => self.fire_thunder(player_x, player_y, projectiles, enemies),
         }
@@ -434,31 +455,24 @@ impl Weapon {
         }
     }
 
-    fn fire_bomb(&self, player_x: i32, player_y: i32, projectiles: &mut Vec<Projectile>) {
+    /// Place one bomb at the given position using the current level's fuse duration.
+    fn fire_bomb_single(&self, x: i32, y: i32, projectiles: &mut Vec<Projectile>) {
         let WeaponFireConfig::Bomb {
             radius,
             fuse_ticks,
             fuse_reduction_per_level,
+            ..
         } = config::WEAPON_BOMB.fire
         else {
             return;
         };
         let dmg = self.damage();
         let idx = self.kind.idx();
-        let effective_fuse = fuse_ticks.saturating_sub((self.level - 1) * fuse_reduction_per_level);
+        let fuse = fuse_ticks.saturating_sub((self.level - 1) * fuse_reduction_per_level);
 
         // Fuse indicator (visual only, pierce=1 to survive retain check)
         projectiles.push(
-            Projectile::new(
-                player_x,
-                player_y,
-                'o',
-                0,
-                effective_fuse + 1,
-                Movement::Static,
-                1,
-            )
-            .with_weapon_kind(idx),
+            Projectile::new(x, y, 'o', 0, fuse + 1, Movement::Static, 1).with_weapon_kind(idx),
         );
 
         // Explosion cells: filled ellipse (aspect-ratio corrected)
@@ -470,19 +484,28 @@ impl Weapon {
                 let ady = dy as f64;
                 if adx * adx + ady * ady <= r * r {
                     projectiles.push(
-                        Projectile::new(
-                            player_x + dx,
-                            player_y + dy,
-                            '*',
-                            dmg,
-                            4,
-                            Movement::Static,
-                            1,
-                        )
-                        .with_delay(effective_fuse)
-                        .with_weapon_kind(idx),
+                        Projectile::new(x + dx, y + dy, '*', dmg, 4, Movement::Static, 1)
+                            .with_delay(fuse)
+                            .with_weapon_kind(idx),
                     );
                 }
+            }
+        }
+    }
+
+    fn fire_bomb(&mut self, player_x: i32, player_y: i32, projectiles: &mut Vec<Projectile>) {
+        self.fire_bomb_single(player_x, player_y, projectiles);
+
+        // Lv2+: schedule a 2nd bomb to drop at the player's future position.
+        if self.level >= 2 {
+            let WeaponFireConfig::Bomb { stagger_ticks, .. } = config::WEAPON_BOMB.fire else {
+                return;
+            };
+            if let WeaponState::Bomb {
+                ref mut pending_bomb_timer,
+            } = self.state
+            {
+                *pending_bomb_timer = Some(stagger_ticks);
             }
         }
     }
@@ -615,15 +638,52 @@ mod tests {
     }
 
     #[test]
-    fn bomb_always_spawns_one() {
-        for level in [1u32, 3, 5] {
-            let mut w = Weapon::new(WeaponKind::Bomb);
-            w.level = level;
-            let mut projectiles = Vec::new();
-            w.fire_bomb(10, 10, &mut projectiles);
-            let fuse_count = projectiles.iter().filter(|p| p.glyph == 'o').count();
-            assert_eq!(fuse_count, 1, "Lv{} should always spawn 1 bomb", level);
+    fn bomb_spawns_one_at_lv1() {
+        let mut w = Weapon::new(WeaponKind::Bomb);
+        let mut projectiles = Vec::new();
+        w.fire_bomb(10, 10, &mut projectiles);
+        let fuse_count = projectiles.iter().filter(|p| p.glyph == 'o').count();
+        assert_eq!(fuse_count, 1, "Lv1 should spawn 1 bomb immediately");
+    }
+
+    #[test]
+    fn bomb_lv2_fires_first_bomb_immediately() {
+        let mut w = Weapon::new(WeaponKind::Bomb);
+        w.level = 2;
+        let mut projectiles = Vec::new();
+        w.fire_bomb(10, 10, &mut projectiles);
+        let fuse_count = projectiles.iter().filter(|p| p.glyph == 'o').count();
+        assert_eq!(fuse_count, 1, "Lv2 fires 1st bomb immediately");
+    }
+
+    #[test]
+    fn bomb_lv2_fires_second_bomb_after_stagger() {
+        let WeaponFireConfig::Bomb { stagger_ticks, .. } = config::WEAPON_BOMB.fire else {
+            panic!("unexpected fire config");
+        };
+        let mut w = Weapon::new(WeaponKind::Bomb);
+        w.level = 2;
+        let mut projectiles = Vec::new();
+        // Fire (places 1st bomb + schedules 2nd)
+        w.fire_bomb(10, 10, &mut projectiles);
+        // Advance stagger_ticks via update (cooldown_timer > 0 so no new fire)
+        w.cooldown_timer = stagger_ticks + 10;
+        for _ in 0..stagger_ticks {
+            w.update(20, 20, &mut projectiles, &[], FacingDir::Right);
         }
+        let fuse_count = projectiles.iter().filter(|p| p.glyph == 'o').count();
+        assert_eq!(
+            fuse_count, 2,
+            "2nd bomb should be placed after stagger delay"
+        );
+        // 2nd bomb is placed at the player's new position (20, 20)
+        let second_fuse = projectiles
+            .iter()
+            .find(|p| p.glyph == 'o' && p.x == 20 && p.y == 20);
+        assert!(
+            second_fuse.is_some(),
+            "2nd bomb should be at new player position"
+        );
     }
 
     #[test]
