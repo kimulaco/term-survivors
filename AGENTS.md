@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-TERM SURVIVORS is a Vampire Survivors-like roguelike shooter that runs entirely in the terminal. Built with Rust (edition 2021). The player character `@` survives 10 minutes of auto-combat against bug swarms and defeats a final boss ("Kernel Panic") to clear the game.
+TERM SURVIVORS is a Vampire Survivors-like roguelike shooter that runs entirely in the terminal. Built with Rust (edition 2021). The player character `@` survives 5 minutes of auto-combat against bug swarms and defeats a final boss ("Kernel Panic") to clear the game.
 
 ## Architecture
 
