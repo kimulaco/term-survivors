@@ -374,10 +374,10 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
             (proj.glyph, Color::Yellow)
         } else {
             let c = match proj.weapon_kind_idx {
-                0 => Color::LightBlue,  // Orbit
-                1 => Color::Yellow,     // Laser
-                2 => Color::Cyan,       // Drone
-                4 => Color::LightGreen, // Scatter
+                0 => Color::LightBlue, // Orbit
+                1 => Color::Yellow,    // Laser
+                2 => Color::Cyan,      // Drone
+                4 => Color::LightBlue, // Scatter
                 _ => Color::LightBlue,
             };
             (proj.glyph, c)
