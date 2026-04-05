@@ -1,0 +1,15 @@
+{
+  "name": "@term-survivors/darwin-arm64",
+  "version": "0.1.1",
+  "description": "darwin arm64 binary for term-survivors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://kimulaco@github.com/kimulaco/term-survivors.git"
+  },
+  "os": ["darwin"],
+  "cpu": ["arm64"],
+  "publishConfig": {
+    "provenance": true
+  }
+}
