@@ -34,7 +34,7 @@ term-survivors
 
 ```bash
 term-survivors --help
-term-survivors 0.1.0
+term-survivors 0.1.2
 
 USAGE:
     term-survivors [COMMAND]

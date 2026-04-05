@@ -1,6 +1,6 @@
 {
   "name": "@term-survivors/linux-arm64",
-  "version": "0.1.2-alpha.3",
+  "version": "0.1.2",
   "description": "linux arm64 binary for term-survivors",
   "license": "MIT",
   "repository": {

@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.2](https://github.com/kimulaco/term-survivors/releases/tag/v0.1.2) - 2026-04-05
+
+- Added support for Trusted Publishing for npm deployments. (https://github.com/kimulaco/term-survivors/pull/1)
+
 ## [0.1.1](https://github.com/kimulaco/term-survivors/releases/tag/v0.1.1) - 2026-04-05
 
 - Added support for Trusted Publishing for crate.io deployments.
