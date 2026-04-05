@@ -5,7 +5,10 @@ pub fn play_level_up(sound_enabled: bool) {
     }
     let path = std::env::var("TERM_SURVIVORS_LEVELUP_SOUND")
         .unwrap_or_else(|_| "/System/Library/Sounds/Glass.aiff".to_string());
-    let _ = std::process::Command::new("afplay").arg(path).spawn();
+    let _ = std::process::Command::new("afplay")
+        .arg(path)
+        .stderr(std::process::Stdio::null())
+        .spawn();
 }
 
 #[cfg(all(not(test), not(target_os = "macos")))]
@@ -27,7 +30,10 @@ pub fn play_player_hurt(sound_enabled: bool) {
     }
     let path = std::env::var("TERM_SURVIVORS_HURT_SOUND")
         .unwrap_or_else(|_| "/System/Library/Sounds/Basso.aiff".to_string());
-    let _ = std::process::Command::new("afplay").arg(path).spawn();
+    let _ = std::process::Command::new("afplay")
+        .arg(path)
+        .stderr(std::process::Stdio::null())
+        .spawn();
 }
 
 #[cfg(all(not(test), not(target_os = "macos")))]
