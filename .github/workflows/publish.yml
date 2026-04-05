@@ -4,15 +4,6 @@ on:
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      dry_run:
-        description: "Dry run (skip actual publish)"
-        type: boolean
-        default: true
-      tag:
-        description: "npm dist-tag (e.g. alpha, latest)"
-        type: string
-        default: "latest"
 
 jobs:
   pin:
@@ -67,7 +58,6 @@ jobs:
 
   publish-crate:
     needs: [fmt, clippy, test]
-    if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-latest
     environment: production
     permissions:
@@ -168,9 +158,8 @@ jobs:
           done
       - name: Publish platform packages
         run: |
-          DRY_RUN=${{ inputs.dry_run == true && '--dry-run' || '' }}
           for pkg in darwin-arm64 darwin-x64 linux-x64 linux-arm64 win32-x64; do
-            npm publish ./dist/npm-$pkg --access public --provenance --tag ${{ inputs.tag || 'latest' }} $DRY_RUN
+            npm publish ./dist/npm-$pkg --access public --provenance --tag latest
           done
       - name: Publish main package
-        run: npm publish ./npm/term-survivors --access public --provenance --tag ${{ inputs.tag || 'latest' }} ${{ inputs.dry_run == true && '--dry-run' || '' }}
+        run: npm publish ./npm/term-survivors --access public --provenance --tag latest
