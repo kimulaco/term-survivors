@@ -96,7 +96,7 @@ enum WeaponState { Orbit { angle: f64 }, Laser, Pulse, Drone }
 - Entity positions are `i32` (not unsigned) to allow temporary out-of-bounds without overflow.
 - The game loop is synchronous; avoid introducing async or threading.
 - Rendering is strictly separated in `src/ui.rs`. Game logic modules must not depend on ratatui.
-- Use `ratatui::Frame` buffer writes (`set_cell`) for character-level rendering within the arena.
+- For character-level cell rendering in the arena, use the local `set_cell(buf, x, y, ch, color)` helper in `ui.rs`, which writes directly to a `&mut Buffer` obtained via the `Widget` trait.
 - Weapons create `Projectile` instances; they never directly modify enemy state.
 
 ## Testing
@@ -108,6 +108,21 @@ cargo test
 Unit tests are defined as `#[cfg(test)] mod tests` blocks at the bottom of each module file.
 
 Not tested (by design): `main` (terminal I/O entry point), `ui` (ratatui rendering), `config` (constants only).
+
+The `simulate` feature (`cargo build --features simulate`) enables `src/systems/simulate.rs`, a developer-only headless runner used for balance testing. It is excluded from published crate builds via `include` in `Cargo.toml`.
+
+## npm Distribution
+
+The `npm/` directory contains the packages published to npmjs.com:
+
+- `npm/term-survivors/` — main package with a Node.js shim (`index.js`) as the `bin` entry
+- `npm/@term-survivors/{platform}/` — platform binary packages (`darwin-arm64`, `darwin-x64`, `linux-x64`, `linux-arm64`, `win32-x64`)
+
+Uses the **optionalDependencies pattern** (same as esbuild / Biome): the main package lists all platform packages as `optionalDependencies`, and npm skips packages whose `os`/`cpu` fields don't match the current platform. The JS shim resolves the correct binary at runtime via `require.resolve`.
+
+Binary artifacts are built by the `build-npm` matrix job in `.github/workflows/publish.yml` and published by the `publish-npm` job. The version in `Cargo.toml` and all `package.json` files must be kept in sync when cutting a release.
+
+Publishing uses npm Trusted Publishing (OIDC); no `NPM_TOKEN` secret is needed. Configure per-package provenance on npmjs.com before the first publish.
 
 ## Save Data
 
