@@ -1,6 +1,6 @@
 {
   "name": "@term-survivors/linux-x64",
-  "version": "0.1.2-alpha.1",
+  "version": "0.1.2-alpha.2",
   "description": "linux x64 binary for term-survivors",
   "license": "MIT",
   "repository": {
