@@ -1,6 +1,6 @@
 {
   "name": "@term-survivors/win32-x64",
-  "version": "0.1.2-alpha.2",
+  "version": "0.1.2-alpha.3",
   "description": "win32 x64 binary for term-survivors",
   "license": "MIT",
   "repository": {
