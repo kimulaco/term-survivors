@@ -8,15 +8,25 @@ A Vampire Survivors-like roguelike shooter that runs in the terminal.
 
 Survive waves of enemies for 5+ minutes and defeat the final boss to clear the game. Weapons fire automatically — just move and stay alive.
 
-- Platforms: macOS / Linux
+- Platforms: macOS / Linux / Windows
 
-## Install
+## Play
 
 ```bash
+npx term-survivors
+```
+
+Or install permanently:
+
+```bash
+# npm
+npm install -g term-survivors
+
+# cargo
 cargo install term-survivors
 ```
 
-## Play
+Then run:
 
 ```bash
 term-survivors

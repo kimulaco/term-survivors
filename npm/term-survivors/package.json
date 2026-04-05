@@ -1,0 +1,33 @@
+{
+  "name": "term-survivors",
+  "version": "0.1.2-alpha.3",
+  "description": "A Vampire Survivors-like roguelike shooter that runs in the terminal",
+  "keywords": [
+    "game",
+    "roguelike",
+    "terminal",
+    "tui",
+    "survivors"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://kimulaco@github.com/kimulaco/term-survivors.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "index.js"
+  ],
+  "bin": {
+    "term-survivors": "index.js"
+  },
+  "optionalDependencies": {
+    "@term-survivors/darwin-arm64": "0.1.2-alpha.3",
+    "@term-survivors/darwin-x64": "0.1.2-alpha.3",
+    "@term-survivors/linux-x64": "0.1.2-alpha.3",
+    "@term-survivors/linux-arm64": "0.1.2-alpha.3",
+    "@term-survivors/win32-x64": "0.1.2-alpha.3"
+  }
+}

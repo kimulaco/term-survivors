@@ -1,6 +1,10 @@
 # Rust
 /target
 
+# Node.js
+node_modules
+dist
+
 # Env
 .env
 .env.*

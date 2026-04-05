@@ -3,6 +3,7 @@ name: Publish
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   pin:
@@ -71,3 +72,94 @@ jobs:
       - run: cargo publish
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+  build-npm:
+    needs: [fmt, clippy, test]
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            pkg: darwin-arm64
+            os: macos-latest
+            use_cross: false
+          - target: x86_64-apple-darwin
+            pkg: darwin-x64
+            os: macos-latest
+            use_cross: false
+          - target: x86_64-unknown-linux-musl
+            pkg: linux-x64
+            os: ubuntu-latest
+            use_cross: false
+          - target: aarch64-unknown-linux-musl
+            pkg: linux-arm64
+            os: ubuntu-latest
+            use_cross: true
+          - target: x86_64-pc-windows-msvc
+            pkg: win32-x64
+            os: windows-latest
+            use_cross: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        with:
+          key: ${{ matrix.target }}
+      - name: Install cross
+        if: matrix.use_cross
+        run: cargo install cross --locked
+      - name: Build (cross)
+        if: matrix.use_cross
+        run: cross build --release --target ${{ matrix.target }}
+      - name: Build (native)
+        if: "!matrix.use_cross"
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          mkdir -p dist/${{ matrix.pkg }}
+          if [[ "${{ matrix.target }}" == *windows* ]]; then
+            cp target/${{ matrix.target }}/release/term-survivors.exe dist/${{ matrix.pkg }}/
+          else
+            cp target/${{ matrix.target }}/release/term-survivors dist/${{ matrix.pkg }}/
+            chmod +x dist/${{ matrix.pkg }}/term-survivors
+          fi
+          cp npm/@term-survivors/${{ matrix.pkg }}/package.json dist/${{ matrix.pkg }}/
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: npm-${{ matrix.pkg }}
+          path: dist/${{ matrix.pkg }}/
+
+  publish-npm:
+    needs: build-npm
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: "24.14.1"
+          registry-url: "https://registry.npmjs.org"
+      - name: Download all binary artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: dist/
+      - name: Set binary permissions
+        run: |
+          for pkg in darwin-arm64 darwin-x64 linux-x64 linux-arm64; do
+            chmod +x dist/npm-$pkg/term-survivors
+          done
+      - name: Publish platform packages
+        run: |
+          for pkg in darwin-arm64 darwin-x64 linux-x64 linux-arm64 win32-x64; do
+            npm publish ./dist/npm-$pkg --access public --provenance --tag latest
+          done
+      - name: Publish main package
+        run: npm publish ./npm/term-survivors --access public --provenance --tag latest

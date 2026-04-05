@@ -1,0 +1,19 @@
+{
+  "name": "@term-survivors/win32-x64",
+  "version": "0.1.2-alpha.3",
+  "description": "win32 x64 binary for term-survivors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://kimulaco@github.com/kimulaco/term-survivors.git"
+  },
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "publishConfig": {
+    "provenance": true
+  }
+}
