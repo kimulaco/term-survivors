@@ -1,8 +1,14 @@
 {
   "name": "term-survivors",
-  "version": "0.1.1",
+  "version": "0.1.2-alpha.0",
   "description": "A Vampire Survivors-like roguelike shooter that runs in the terminal",
-  "keywords": ["game", "roguelike", "terminal", "tui", "survivors"],
+  "keywords": [
+    "game",
+    "roguelike",
+    "terminal",
+    "tui",
+    "survivors"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -11,15 +17,17 @@
   "engines": {
     "node": ">=20"
   },
-  "files": ["index.js"],
+  "files": [
+    "index.js"
+  ],
   "bin": {
     "term-survivors": "index.js"
   },
   "optionalDependencies": {
-    "@term-survivors/darwin-arm64": "0.1.1",
-    "@term-survivors/darwin-x64": "0.1.1",
-    "@term-survivors/linux-x64": "0.1.1",
-    "@term-survivors/linux-arm64": "0.1.1",
-    "@term-survivors/win32-x64": "0.1.1"
+    "@term-survivors/darwin-arm64": "0.1.2-alpha.0",
+    "@term-survivors/darwin-x64": "0.1.2-alpha.0",
+    "@term-survivors/linux-x64": "0.1.2-alpha.0",
+    "@term-survivors/linux-arm64": "0.1.2-alpha.0",
+    "@term-survivors/win32-x64": "0.1.2-alpha.0"
   }
 }
