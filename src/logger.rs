@@ -44,7 +44,6 @@ fn now_utc() -> String {
     )
 }
 
-/// Converts days since Unix epoch to (year, month, day).
 /// Algorithm: Howard Hinnant's civil_from_days.
 fn epoch_days_to_ymd(days: u64) -> (u32, u32, u32) {
     let z = days as i64 + 719_468;
