@@ -81,7 +81,7 @@ impl GameState {
         self.player.y = self.player.y.clamp(0, height - 1);
     }
 
-    pub fn tick(&mut self, dx: i32, dy: i32, sound_enabled: bool) -> TickResult {
+    pub fn tick(&mut self, dx: i32, dy: i32) -> TickResult {
         self.elapsed_ticks += 1;
 
         // Move player
@@ -193,8 +193,7 @@ impl GameState {
         }
 
         // Enemy-player contact
-        let screen_shake =
-            combat::process_enemy_contact(&mut self.enemies, &mut self.player, sound_enabled);
+        let screen_shake = combat::process_enemy_contact(&mut self.enemies, &mut self.player);
 
         // Clean up expired projectiles
         self.projectiles.retain(|p| !p.is_expired() && p.pierce > 0);
@@ -357,7 +356,7 @@ mod tests {
     fn tick_increments_elapsed() {
         let mut gs = GameState::new(80, 24);
         gs.add_weapon(WeaponKind::Orbit);
-        let _ = gs.tick(0, 0, false);
+        let _ = gs.tick(0, 0);
         assert_eq!(gs.elapsed_ticks, 1);
     }
 
@@ -366,7 +365,7 @@ mod tests {
         let mut gs = GameState::new(80, 24);
         gs.add_weapon(WeaponKind::Orbit);
         let start_x = gs.player.x;
-        let _ = gs.tick(1, 0, false);
+        let _ = gs.tick(1, 0);
         assert_eq!(gs.player.x, start_x + 1);
     }
 
@@ -374,7 +373,7 @@ mod tests {
     fn tick_returns_game_over_when_dead() {
         let mut gs = GameState::new(80, 24);
         gs.player.hp = 0;
-        let result = gs.tick(0, 0, false);
+        let result = gs.tick(0, 0);
         assert!(matches!(result.outcome, TickOutcome::GameOver));
     }
 
@@ -383,7 +382,7 @@ mod tests {
         let mut gs = GameState::new(80, 24);
         gs.add_weapon(WeaponKind::Orbit);
         gs.xp = config::XP_THRESHOLDS[0];
-        let result = gs.tick(0, 0, false);
+        let result = gs.tick(0, 0);
         assert!(matches!(result.outcome, TickOutcome::LevelUp(_)));
         assert_eq!(gs.level, 2);
     }

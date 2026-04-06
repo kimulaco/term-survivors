@@ -1,4 +1,3 @@
-use crate::audio;
 use crate::config;
 use crate::entities::weapon::WeaponKind;
 use crate::save::{GameSaveData, Settings};
@@ -117,10 +116,6 @@ impl App {
         }
     }
 
-    pub fn toggle_sound(&mut self) {
-        self.save.toggle_sound();
-    }
-
     pub fn toggle_auto_restart(&mut self) {
         self.save.toggle_auto_restart();
     }
@@ -142,14 +137,13 @@ impl App {
             self.screen_shake_ticks -= 1;
         }
         if let AppPhase::Playing = &self.phase {
-            let result = self.game.tick(self.dx, self.dy, self.save.sound_enabled);
+            let result = self.game.tick(self.dx, self.dy);
             if result.screen_shake > 0 {
                 self.screen_shake_ticks = result.screen_shake;
             }
             match result.outcome {
                 TickOutcome::Continue => {}
                 TickOutcome::LevelUp(choices) => {
-                    audio::play_level_up(self.save.sound_enabled);
                     self.phase = AppPhase::LevelUp(choices, 0);
                 }
                 TickOutcome::GameOver => {

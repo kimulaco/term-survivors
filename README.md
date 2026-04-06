@@ -60,7 +60,6 @@ Keyboard only. Mouse is not supported.
 | `Enter` | Start game / resume saved session (title screen) |
 | `N` | Start new game (title screen) |
 | `M` | Return to title (during play) |
-| `V` | Toggle mute |
 | `R` | Retry after game over / clear |
 | `Q` / `ESC` | Quit |
 

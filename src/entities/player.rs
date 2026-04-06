@@ -1,4 +1,3 @@
-use crate::audio;
 use crate::config;
 use serde::{Deserialize, Serialize};
 
@@ -83,13 +82,12 @@ impl Player {
     }
 
     /// Apply damage to the player. Returns true if damage landed, false if blocked by invincibility.
-    pub fn take_damage(&mut self, damage: i32, sound_enabled: bool) -> bool {
+    pub fn take_damage(&mut self, damage: i32) -> bool {
         if self.invincible_ticks > 0 {
             return false;
         }
         self.hp = (self.hp - damage).max(0);
         self.invincible_ticks = config::PLAYER_INVINCIBLE_TICKS;
-        audio::play_player_hurt(sound_enabled);
         true
     }
 
@@ -160,7 +158,7 @@ mod tests {
     #[test]
     fn take_damage_reduces_hp() {
         let mut p = Player::new(0, 0);
-        p.take_damage(30, false);
+        p.take_damage(30);
         assert_eq!(p.hp, config::PLAYER_MAX_HP - 30);
         assert_eq!(p.invincible_ticks, config::PLAYER_INVINCIBLE_TICKS);
     }
@@ -170,14 +168,14 @@ mod tests {
         let mut p = Player::new(0, 0);
         p.invincible_ticks = 10;
         let hp_before = p.hp;
-        p.take_damage(50, false);
+        p.take_damage(50);
         assert_eq!(p.hp, hp_before);
     }
 
     #[test]
     fn take_damage_hp_floors_at_zero() {
         let mut p = Player::new(0, 0);
-        p.take_damage(9999, false);
+        p.take_damage(9999);
         assert_eq!(p.hp, 0);
     }
 

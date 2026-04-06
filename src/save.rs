@@ -29,7 +29,6 @@ fn ensure_save_dir() -> Option<PathBuf> {
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct Settings {
-    pub sound_enabled: bool,
     pub auto_restart: bool,
 }
 
@@ -76,11 +75,6 @@ impl Settings {
                 }
             }
         }
-    }
-
-    pub fn toggle_sound(&mut self) {
-        self.sound_enabled = !self.sound_enabled;
-        self.save();
     }
 
     pub fn toggle_auto_restart(&mut self) {
@@ -153,11 +147,6 @@ mod tests {
     #[test]
     fn format_ticks_ten_minutes() {
         assert_eq!(Settings::format_ticks(60 * 600), "10:00");
-    }
-
-    #[test]
-    fn settings_default_sound_disabled() {
-        assert!(!Settings::default().sound_enabled);
     }
 
     #[test]
