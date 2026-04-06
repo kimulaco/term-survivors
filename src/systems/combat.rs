@@ -64,14 +64,10 @@ pub fn process_combat(
 
 /// Check enemy-player collisions, apply damage.
 /// Returns the shake power of the enemy that landed a hit, or 0 if no damage was taken.
-pub fn process_enemy_contact(
-    enemies: &mut [Enemy],
-    player: &mut Player,
-    sound_enabled: bool,
-) -> u32 {
+pub fn process_enemy_contact(enemies: &mut [Enemy], player: &mut Player) -> u32 {
     for enemy in enemies.iter_mut() {
         if enemy.collides_with_player(player.x, player.y) {
-            if player.take_damage(enemy.damage, sound_enabled) {
+            if player.take_damage(enemy.damage) {
                 let shake = enemy.shake_power;
                 enemy.apply_knockback(player.x, player.y, 2);
                 return shake;
@@ -173,7 +169,7 @@ mod tests {
         let mut player = Player::new(5, 5);
         let hp_before = player.hp;
 
-        process_enemy_contact(&mut enemies, &mut player, false);
+        process_enemy_contact(&mut enemies, &mut player);
         assert!(player.hp < hp_before);
     }
 
@@ -182,7 +178,7 @@ mod tests {
         let mut enemies = vec![Enemy::new(EnemyKind::Bug, 5, 5)];
         let mut player = Player::new(5, 5);
 
-        process_enemy_contact(&mut enemies, &mut player, false);
+        process_enemy_contact(&mut enemies, &mut player);
         assert!(enemies[0].knockback_ticks > 0);
     }
 
@@ -193,7 +189,7 @@ mod tests {
         player.invincible_ticks = 10;
         let hp_before = player.hp;
 
-        process_enemy_contact(&mut enemies, &mut player, false);
+        process_enemy_contact(&mut enemies, &mut player);
         assert_eq!(player.hp, hp_before);
     }
 
@@ -203,7 +199,7 @@ mod tests {
         let mut player = Player::new(0, 0);
         let hp_before = player.hp;
 
-        process_enemy_contact(&mut enemies, &mut player, false);
+        process_enemy_contact(&mut enemies, &mut player);
         assert_eq!(player.hp, hp_before);
     }
 }

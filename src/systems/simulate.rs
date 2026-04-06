@@ -243,7 +243,7 @@ pub fn run_single(cfg: &RunConfig, starting_weapon: WeaponKind) -> RunResult {
         }
 
         let (dx, dy) = ai_move(&gs);
-        let result = gs.tick(dx, dy, false);
+        let result = gs.tick(dx, dy);
 
         match result.outcome {
             TickOutcome::Continue => {}

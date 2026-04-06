@@ -1,4 +1,3 @@
-mod audio;
 mod config;
 mod entities;
 mod save;
@@ -187,7 +186,6 @@ fn run_game() -> io::Result<()> {
                                 }
                             }
                             KeyCode::Char('n') => app.start_game(),
-                            KeyCode::Char('v') => app.toggle_sound(),
                             KeyCode::Char('a') => app.toggle_auto_restart(),
                             KeyCode::Esc => {
                                 should_break = true;
@@ -217,7 +215,6 @@ fn run_game() -> io::Result<()> {
                                 KeyCode::Char('2') => app.select_starting_weapon(1),
                                 KeyCode::Char('3') => app.select_starting_weapon(2),
                                 KeyCode::Char('m') => app.phase = AppPhase::Title,
-                                KeyCode::Char('v') => app.toggle_sound(),
                                 KeyCode::Esc => app.phase = AppPhase::Title,
                                 _ => {}
                             }
@@ -251,7 +248,6 @@ fn run_game() -> io::Result<()> {
                                 app.resume_from_pause();
                                 break;
                             }
-                            KeyCode::Char('v') => app.toggle_sound(),
                             KeyCode::Esc => {
                                 should_break = true;
                                 break;
@@ -276,7 +272,6 @@ fn run_game() -> io::Result<()> {
                                 KeyCode::Char('2') => app.select_upgrade(1),
                                 KeyCode::Char('3') => app.select_upgrade(2),
                                 KeyCode::Char('m') => app.return_to_title(),
-                                KeyCode::Char('v') => app.toggle_sound(),
                                 KeyCode::Esc => {
                                     should_break = true;
                                     break;

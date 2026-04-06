@@ -68,11 +68,6 @@ fn draw_title(frame: &mut Frame, area: Rect, app: &App) {
     } else {
         "║   Press [ENTER] to Start           ║"
     };
-    let sound_line = if app.save.sound_enabled {
-        "║   [V] Sound: ON                    ║"
-    } else {
-        "║   [V] Sound: OFF                   ║"
-    };
     let auto_restart_line = if app.save.auto_restart {
         "║   [A] Auto-Restart: ON             ║"
     } else {
@@ -94,7 +89,6 @@ fn draw_title(frame: &mut Frame, area: Rect, app: &App) {
         "║   Press [ESC] to Quit              ║",
         "║                                    ║",
         "║   Settings:                        ║",
-        sound_line,
         auto_restart_line,
         "║                                    ║",
         "║   Controls:                        ║",
