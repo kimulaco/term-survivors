@@ -1,5 +1,6 @@
 mod config;
 mod entities;
+mod logger;
 mod save;
 mod systems;
 mod ui;
@@ -137,6 +138,12 @@ fn run_simulate(args: &[String]) -> io::Result<()> {
 }
 
 fn run_game() -> io::Result<()> {
+    logger::init();
+    logger::info(&format!(
+        "term-survivors v{} started",
+        env!("CARGO_PKG_VERSION")
+    ));
+
     let original_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
         let _ = disable_raw_mode();
