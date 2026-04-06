@@ -20,7 +20,11 @@ fn ensure_save_dir() -> Option<PathBuf> {
     let dir = save_dir()?;
     if !dir.exists() {
         if let Err(e) = fs::create_dir_all(&dir) {
-            eprintln!("Failed to create save directory {}: {}", dir.display(), e);
+            crate::logger::error(&format!(
+                "Failed to create save directory {}: {}",
+                dir.display(),
+                e
+            ));
             return None;
         }
     }
@@ -71,7 +75,11 @@ impl Settings {
         if let Some(path) = Self::path() {
             if let Ok(json) = serde_json::to_string_pretty(self) {
                 if let Err(e) = fs::write(&path, json) {
-                    eprintln!("Failed to save settings to {}: {}", path.display(), e);
+                    crate::logger::error(&format!(
+                        "Failed to save settings to {}: {}",
+                        path.display(),
+                        e
+                    ));
                 }
             }
         }
@@ -108,7 +116,11 @@ impl GameSaveData {
         if let Some(path) = Self::path() {
             if let Ok(json) = serde_json::to_string_pretty(self) {
                 if let Err(e) = fs::write(&path, json) {
-                    eprintln!("Failed to save session to {}: {}", path.display(), e);
+                    crate::logger::error(&format!(
+                        "Failed to save session to {}: {}",
+                        path.display(),
+                        e
+                    ));
                 }
             }
         }

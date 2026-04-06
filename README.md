@@ -73,6 +73,10 @@ To delete all save data:
 term-survivors clear
 ```
 
+## Logs
+
+Logs are written to `~/.term_survivors/logs/latest.log` and overwritten each session. Attach this file when reporting issues.
+
 ## Development
 
 For contributors: see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
