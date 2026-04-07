@@ -75,7 +75,9 @@ term-survivors clear
 
 ## Logs
 
-Logs are written to `~/.term_survivors/logs/latest.log` and overwritten each session. Attach this file when reporting issues.
+Each session writes debug logs to `~/.term_survivors/logs/latest.log` (overwritten on startup). The log records key events such as game start, level-up choices, and game over/clear outcomes, as well as any errors encountered during the session.
+
+If you're reporting a bug, please include the contents of this file in your [issue](https://github.com/kimulaco/term-survivors/issues) — it helps narrow down what happened.
 
 ## Development
 
