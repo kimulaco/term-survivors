@@ -4,6 +4,7 @@
 # Node.js
 node_modules
 dist
+npm/term-survivors/README.md
 
 # Env
 .env

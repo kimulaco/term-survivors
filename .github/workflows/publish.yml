@@ -170,6 +170,8 @@ jobs:
           for pkg in darwin-arm64 darwin-x64 linux-x64 linux-arm64 win32-x64; do
             npm publish ./dist/npm-$pkg --access public --provenance --tag latest
           done
+      - name: Copy README to main package
+        run: cp README.md npm/term-survivors/README.md
       - name: Publish main package
         run: npm publish ./npm/term-survivors --access public --provenance --tag latest
 
