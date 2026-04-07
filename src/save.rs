@@ -8,7 +8,7 @@ use crate::entities::weapon::Weapon;
 use crate::systems::levelup::Upgrade;
 use crate::systems::session::BossState;
 
-const SAVE_DIR: &str = ".term_survivors";
+pub const SAVE_DIR: &str = ".term_survivors";
 const SETTINGS_FILENAME: &str = "settings.json";
 const SESSION_FILENAME: &str = "session.json";
 
