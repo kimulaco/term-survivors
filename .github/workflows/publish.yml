@@ -197,5 +197,6 @@ jobs:
           tar czf term-survivors-win32-x64.tar.gz -C dist/npm-win32-x64 term-survivors.exe
           sha256sum term-survivors-win32-x64.tar.gz > term-survivors-win32-x64.tar.gz.sha256
           gh release upload "${{ github.event.release.tag_name }}" \
+            --repo "${{ github.repository }}" \
             term-survivors-*.tar.gz \
             term-survivors-*.sha256
