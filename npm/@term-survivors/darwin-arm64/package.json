@@ -1,6 +1,6 @@
 {
   "name": "@term-survivors/darwin-arm64",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "darwin arm64 binary for term-survivors",
   "license": "MIT",
   "repository": {

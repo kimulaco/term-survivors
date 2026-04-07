@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0](https://github.com/kimulaco/term-survivors/releases/tag/v0.2.0) - 2026-04-07
+
+### Game update
+
+- feat: remove sound feature (https://github.com/kimulaco/term-survivors/pull/4)
+  - **Reason for this change:** Implementing this feature in a cross-platform manner is challenging. Additionally, standard sounds like beeps do not fit this game's use case requirements.
+- feat: add file logging to `~/.term_survivors/logs/latest.log` (https://github.com/kimulaco/term-survivors/pull/5)
+
+### Other changes
+
+- chore: include README in npm main package (https://github.com/kimulaco/term-survivors/pull/6)
+- ci: upload release assets to GitHub release (https://github.com/kimulaco/term-survivors/pull/7)
+
 ## [0.1.2](https://github.com/kimulaco/term-survivors/releases/tag/v0.1.2) - 2026-04-05
 
 - Added support for Trusted Publishing for npm deployments. (https://github.com/kimulaco/term-survivors/pull/1)
