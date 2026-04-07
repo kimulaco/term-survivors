@@ -83,7 +83,7 @@ impl App {
         if let AppPhase::WeaponSelect(choices, _) = &self.phase {
             if let Some(&kind) = choices.get(index) {
                 self.game.add_weapon(kind);
-                crate::logger::info(&format!("New game started (weapon: {})", kind.name()));
+                crate::logger::info(&format!("game started - weapon: {}", kind.name()));
                 self.phase = AppPhase::Playing;
             }
         }
@@ -99,7 +99,7 @@ impl App {
             GameSaveData::delete();
             self.has_session = false;
             crate::logger::info(&format!(
-                "Session resumed (level {}, time {})",
+                "session resumed - level {}, time {}",
                 self.game.level,
                 Settings::format_ticks(self.game.elapsed_ticks),
             ));
@@ -154,7 +154,7 @@ impl App {
                 }
                 TickOutcome::GameOver => {
                     crate::logger::info(&format!(
-                        "Game over — level {}, time {}",
+                        "game over - level {}, time {}",
                         self.game.level,
                         Settings::format_ticks(self.game.elapsed_ticks),
                     ));
@@ -167,7 +167,7 @@ impl App {
                 }
                 TickOutcome::Cleared => {
                     crate::logger::info(&format!(
-                        "Game cleared — level {}, time {}",
+                        "game cleared - level {}, time {}",
                         self.game.level,
                         Settings::format_ticks(self.game.elapsed_ticks),
                     ));
@@ -186,7 +186,7 @@ impl App {
         if let AppPhase::LevelUp(choices, _) = &self.phase {
             if let Some(&upgrade) = choices.get(index) {
                 crate::logger::info(&format!(
-                    "Lv{} upgrade: {}",
+                    "level {} upgrade: {}",
                     self.game.level,
                     upgrade.name(&self.game.weapons),
                 ));
