@@ -18,15 +18,13 @@ fn save_dir() -> Option<PathBuf> {
 
 fn ensure_save_dir() -> Option<PathBuf> {
     let dir = save_dir()?;
-    if !dir.exists() {
-        if let Err(e) = fs::create_dir_all(&dir) {
-            crate::logger::error(&format!(
-                "Failed to create save directory {}: {}",
-                dir.display(),
-                e
-            ));
-            return None;
-        }
+    if let Err(e) = fs::create_dir_all(&dir) {
+        crate::logger::error(&format!(
+            "Failed to create save directory {}: {}",
+            dir.display(),
+            e
+        ));
+        return None;
     }
     Some(dir)
 }
