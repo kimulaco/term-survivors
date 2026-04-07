@@ -7,7 +7,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 static WRITER: OnceLock<Mutex<BufWriter<File>>> = OnceLock::new();
 
 fn log_dir() -> Option<PathBuf> {
-    dirs::home_dir().map(|h| h.join(".term_survivors").join("logs"))
+    dirs::home_dir().map(|h| h.join(crate::save::SAVE_DIR).join("logs"))
 }
 
 pub fn init() {
