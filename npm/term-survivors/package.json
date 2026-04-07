@@ -18,7 +18,8 @@
     "node": ">=20"
   },
   "files": [
-    "index.js"
+    "index.js",
+    "README.md"
   ],
   "bin": {
     "term-survivors": "index.js"
