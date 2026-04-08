@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.1](https://github.com/kimulaco/term-survivors/releases/tag/v0.2.1) - 2026-04-08
+## [0.2.2](https://github.com/kimulaco/term-survivors/releases/tag/v0.2.2) - 2026-04-08
 
 ### Game updates
 
@@ -10,6 +10,10 @@
 
 - fix: deduplicate save directory constant between (https://github.com/kimulaco/term-survivors/pull/9)
 - fix: remove redundant existence check (https://github.com/kimulaco/term-survivors/pull/10)
+
+## 0.2.1
+
+skipped (deployment failure)
 
 ## [0.2.0](https://github.com/kimulaco/term-survivors/releases/tag/v0.2.0) - 2026-04-07
 
