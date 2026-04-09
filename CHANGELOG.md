@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.0](https://github.com/kimulaco/term-survivors/releases/tag/v0.3.0) - 2026-04-09
+
+### Game updates
+
+- feat: add dark mode setting (https://github.com/kimulaco/term-survivors/pull/14)
+
+### Other changes
+
+- feat: refactor ui theme logic (https://github.com/kimulaco/term-survivors/pull/16)
+
 ## [0.2.2](https://github.com/kimulaco/term-survivors/releases/tag/v0.2.2) - 2026-04-08
 
 ### Game updates
