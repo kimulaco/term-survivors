@@ -11,31 +11,15 @@ use crate::entities::weapon::WeaponKind;
 use crate::save::Settings;
 use crate::systems::state::{App, AppPhase};
 
-const DARK_BG: Color = Color::Rgb(8, 29, 53);
-
-fn gauge_fg_style(color: Color, dark: bool) -> Style {
-    if dark {
-        Style::default().fg(color).bg(DARK_BG)
-    } else {
-        Style::default().fg(color)
-    }
-}
-
-fn bg(dark: bool) -> Style {
-    if dark {
-        Style::default().bg(DARK_BG)
-    } else {
-        Style::default()
-    }
-}
-
-fn border_style(dark: bool) -> Style {
-    if dark {
-        Style::default().bg(DARK_BG).fg(Color::White)
-    } else {
-        Style::default()
-    }
-}
+mod theme;
+use theme::{
+    bg, border_style, enemy_color, gauge_fg_style, gauge_label_color, popup_header_style,
+    text_color, BOMB_EXPLODE_COLOR, BOMB_FUSE_FAR_COLOR, BOMB_FUSE_MID_COLOR, BOMB_FUSE_NEAR_COLOR,
+    BOSS_HP_BAR_COLOR, DARK_BG, DEFAULT_PROJECTILE_COLOR, DELAY_PREVIEW_FAR_COLOR,
+    DELAY_PREVIEW_MID_COLOR, DELAY_PREVIEW_NEAR_COLOR, HP_HIGH_COLOR, HP_LOW_COLOR, HP_MID_COLOR,
+    LASER_COLOR, PLAYER_COLOR, PLAYER_INVINCIBLE_COLOR, THUNDER_ACTIVE_COLOR,
+    THUNDER_WARN_FAR_COLOR, THUNDER_WARN_MID_COLOR, THUNDER_WARN_NEAR_COLOR,
+};
 
 /// Clear must run first to erase game-entity characters beneath the popup.
 fn fill_bg(frame: &mut ratatui::Frame, area: Rect, dark: bool) {
@@ -55,19 +39,6 @@ fn popup_rect_centered(area: Rect, width: u16, height: u16) -> Rect {
     let x = area.x + (area.width.saturating_sub(width)) / 2;
     let y = area.y + (area.height.saturating_sub(height)) / 2;
     Rect::new(x, y, width, height)
-}
-
-/// Distinct colors per enemy kind — all in red/orange/purple/pink/brown range.
-fn enemy_color(kind: EnemyKind) -> Color {
-    match kind {
-        EnemyKind::Bug => Color::LightRed,
-        EnemyKind::Virus => Color::Rgb(160, 80, 220), // purple
-        EnemyKind::Crash => Color::Rgb(255, 140, 0),  // orange
-        EnemyKind::MemLeak => Color::Rgb(160, 100, 50), // brown
-        EnemyKind::Elite => Color::Rgb(255, 160, 180), // light pink
-        EnemyKind::MidBoss => Color::Rgb(180, 60, 100), // dark rose
-        EnemyKind::Boss => Color::Rgb(220, 20, 60),   // crimson
-    }
 }
 
 pub fn draw(frame: &mut Frame, app: &App) {
@@ -173,6 +144,32 @@ fn draw_title(frame: &mut Frame, area: Rect, app: &App) {
     frame.render_widget(paragraph, area);
 }
 
+/// Appends numbered choice rows (name + description) into `lines`.
+fn push_choice_lines(
+    lines: &mut Vec<Line<'_>>,
+    count: usize,
+    selected: usize,
+    name_fn: impl Fn(usize) -> String,
+    desc_fn: impl Fn(usize) -> String,
+) {
+    for i in 0..count {
+        let (prefix, name_color) = if i == selected {
+            (">", Color::Yellow)
+        } else {
+            (" ", Color::Cyan)
+        };
+        lines.push(Line::from(Span::styled(
+            format!(" {} [{}] {} ", prefix, i + 1, name_fn(i)),
+            Style::default().fg(name_color),
+        )));
+        lines.push(Line::from(Span::styled(
+            format!("       {}", desc_fn(i)),
+            Style::default().fg(Color::Gray),
+        )));
+        lines.push(Line::from(""));
+    }
+}
+
 fn draw_weapon_select(
     frame: &mut Frame,
     area: Rect,
@@ -189,29 +186,18 @@ fn draw_weapon_select(
     let mut lines = vec![
         Line::from(Span::styled(
             " Choose Your Starting Weapon ",
-            Style::default()
-                .fg(Color::Yellow)
-                .add_modifier(Modifier::BOLD),
+            popup_header_style(),
         )),
         Line::from(""),
     ];
 
-    for (i, kind) in choices.iter().enumerate() {
-        let (prefix, name_color) = if i == selected {
-            (">", Color::Yellow)
-        } else {
-            (" ", Color::Cyan)
-        };
-        lines.push(Line::from(Span::styled(
-            format!(" {} [{}] {} ", prefix, i + 1, kind.name()),
-            Style::default().fg(name_color),
-        )));
-        lines.push(Line::from(Span::styled(
-            format!("       {}", kind.description()),
-            Style::default().fg(Color::Gray),
-        )));
-        lines.push(Line::from(""));
-    }
+    push_choice_lines(
+        &mut lines,
+        choices.len(),
+        selected,
+        |i| choices[i].name().to_string(),
+        |i| choices[i].description().to_string(),
+    );
 
     let popup = Paragraph::new(lines)
         .block(
@@ -270,17 +256,11 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
     // HP bar
     let hp_ratio = player.hp as f64 / player.max_hp as f64;
     let hp_color = if hp_ratio > 0.5 {
-        Color::Green
+        HP_HIGH_COLOR
     } else if hp_ratio > 0.25 {
-        Color::Yellow
+        HP_MID_COLOR
     } else {
-        Color::Red
-    };
-
-    let hp_label_color = if hp_ratio > 0.5 {
-        Color::Black
-    } else {
-        Color::White
+        HP_LOW_COLOR
     };
     let hp_gauge = Gauge::default()
         .block(
@@ -294,7 +274,7 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
         .ratio(hp_ratio.clamp(0.0, 1.0))
         .label(Span::styled(
             format!("{}/{}", player.hp, player.max_hp),
-            Style::default().fg(hp_label_color),
+            Style::default().fg(gauge_label_color(hp_ratio)),
         ));
     frame.render_widget(hp_gauge, top_chunks[0]);
 
@@ -345,12 +325,6 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
     } else {
         0.0
     };
-
-    let xp_label_color = if xp_ratio > 0.5 {
-        Color::Black
-    } else {
-        Color::White
-    };
     let xp_gauge = Gauge::default()
         .block(
             Block::default()
@@ -363,9 +337,43 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
         .ratio(xp_ratio.clamp(0.0, 1.0))
         .label(Span::styled(
             format!("{}/{}", game.xp, xp_threshold),
-            Style::default().fg(xp_label_color),
+            Style::default().fg(gauge_label_color(xp_ratio)),
         ));
     frame.render_widget(xp_gauge, rows[1]);
+}
+
+/// Returns the preview cell for a delayed strike based on remaining delay ticks.
+/// `far` and `mid` are the thresholds between the three color phases.
+fn delay_preview_cell(delay_ticks: u32, far_threshold: u32, mid_threshold: u32) -> (char, Color) {
+    if delay_ticks > far_threshold {
+        ('.', DELAY_PREVIEW_FAR_COLOR)
+    } else if delay_ticks > mid_threshold {
+        ('.', DELAY_PREVIEW_MID_COLOR)
+    } else {
+        ('.', DELAY_PREVIEW_NEAR_COLOR)
+    }
+}
+
+/// Draws a multi-cell enemy body and its HP bar above.
+fn draw_multi_cell_enemy(
+    buf: &mut Buffer,
+    enemy: &Enemy,
+    inner: Rect,
+    sdx: i32,
+    sdy: i32,
+    color: Color,
+    glyph_fn: impl Fn(i32, i32) -> char,
+) {
+    for by in 0..enemy.height {
+        for bx in 0..enemy.width {
+            let sx = inner.x as i32 + enemy.x + bx + sdx;
+            let sy = inner.y as i32 + enemy.y + by + sdy;
+            if in_bounds(inner, sx, sy) {
+                set_cell(buf, sx as u16, sy as u16, glyph_fn(bx, by), color);
+            }
+        }
+    }
+    draw_boss_hp_bar(buf, enemy, inner, sdx, sdy);
 }
 
 fn draw_boss_hp_bar(buf: &mut Buffer, enemy: &Enemy, inner: Rect, sdx: i32, sdy: i32) {
@@ -378,7 +386,7 @@ fn draw_boss_hp_bar(buf: &mut Buffer, enemy: &Enemy, inner: Rect, sdx: i32, sdy:
             let sx = inner.x as i32 + enemy.x + bx + sdx;
             if in_bounds(inner, sx, bar_y) {
                 let ch = if bx < filled { '█' } else { '░' };
-                set_cell(buf, sx as u16, bar_y as u16, ch, Color::Red);
+                set_cell(buf, sx as u16, bar_y as u16, ch, BOSS_HP_BAR_COLOR);
             }
         }
     }
@@ -411,24 +419,18 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
             if proj.ttl % period >= period / 2 {
                 (' ', Color::Reset)
             } else if proj.ttl > 30 {
-                ('?', Color::Yellow)
+                ('?', THUNDER_WARN_FAR_COLOR)
             } else if proj.ttl > 15 {
-                ('!', Color::LightYellow)
+                ('!', THUNDER_WARN_MID_COLOR)
             } else {
-                ('#', Color::LightRed)
+                ('#', THUNDER_WARN_NEAR_COLOR)
             }
         } else if wk == WeaponKind::Thunder && proj.delay_ticks > 0 {
             // Thunder strike cell during warn phase: preview
-            if proj.delay_ticks > 30 {
-                ('.', Color::DarkGray)
-            } else if proj.delay_ticks > 15 {
-                ('.', Color::Gray)
-            } else {
-                ('.', Color::Yellow)
-            }
+            delay_preview_cell(proj.delay_ticks, 30, 15)
         } else if wk == WeaponKind::Thunder {
             // Thunder strike (active)
-            (proj.glyph, Color::White)
+            (proj.glyph, THUNDER_ACTIVE_COLOR)
         // Fuse indicator (damage=0): blink + phase change
         } else if proj.damage == 0 && wk == WeaponKind::Bomb {
             let period: u32 = if proj.ttl > 60 {
@@ -441,28 +443,22 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
             if proj.ttl % period >= period / 2 {
                 (' ', Color::Reset) // write space to actively clear the cell
             } else if proj.ttl > 60 {
-                ('O', Color::LightYellow)
+                ('O', BOMB_FUSE_FAR_COLOR)
             } else if proj.ttl > 30 {
-                ('o', Color::Yellow)
+                ('o', BOMB_FUSE_MID_COLOR)
             } else {
-                ('*', Color::LightRed)
+                ('*', BOMB_FUSE_NEAR_COLOR)
             }
         } else if wk == WeaponKind::Bomb && proj.delay_ticks > 0 {
             // Bomb explosion cell during fuse: preview color matches fuse indicator phase
-            if proj.delay_ticks > 60 {
-                ('.', Color::DarkGray)
-            } else if proj.delay_ticks > 30 {
-                ('.', Color::Gray)
-            } else {
-                ('.', Color::Yellow)
-            }
+            delay_preview_cell(proj.delay_ticks, 60, 30)
         } else if wk == WeaponKind::Bomb {
             // Bomb explosion cell detonating
-            (proj.glyph, Color::Yellow)
+            (proj.glyph, BOMB_EXPLODE_COLOR)
         } else {
             let c = match wk {
-                WeaponKind::Laser => Color::Yellow,
-                _ => Color::Cyan,
+                WeaponKind::Laser => LASER_COLOR,
+                _ => DEFAULT_PROJECTILE_COLOR,
             };
             (proj.glyph, c)
         };
@@ -484,34 +480,17 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
         let color = enemy_color(enemy.kind);
 
         if enemy.kind == EnemyKind::Boss {
-            for by in 0..enemy.height {
-                for bx in 0..enemy.width {
-                    let sx = inner.x as i32 + enemy.x + bx + sdx;
-                    let sy = inner.y as i32 + enemy.y + by + sdy;
-                    if in_bounds(inner, sx, sy) {
-                        let ch = if by == 0 && (bx == 0 || bx == enemy.width - 1) {
-                            '╔'
-                        } else if by == enemy.height - 1 && (bx == 0 || bx == enemy.width - 1) {
-                            '╚'
-                        } else {
-                            enemy.glyph
-                        };
-                        set_cell(buf, sx as u16, sy as u16, ch, color);
-                    }
+            draw_multi_cell_enemy(buf, enemy, inner, sdx, sdy, color, |bx, by| {
+                if by == 0 && (bx == 0 || bx == enemy.width - 1) {
+                    '╔'
+                } else if by == enemy.height - 1 && (bx == 0 || bx == enemy.width - 1) {
+                    '╚'
+                } else {
+                    enemy.glyph
                 }
-            }
-            draw_boss_hp_bar(buf, enemy, inner, sdx, sdy);
+            });
         } else if enemy.kind == EnemyKind::MidBoss {
-            for by in 0..enemy.height {
-                for bx in 0..enemy.width {
-                    let sx = inner.x as i32 + enemy.x + bx + sdx;
-                    let sy = inner.y as i32 + enemy.y + by + sdy;
-                    if in_bounds(inner, sx, sy) {
-                        set_cell(buf, sx as u16, sy as u16, enemy.glyph, color);
-                    }
-                }
-            }
-            draw_boss_hp_bar(buf, enemy, inner, sdx, sdy);
+            draw_multi_cell_enemy(buf, enemy, inner, sdx, sdy, color, |_, _| enemy.glyph);
         } else {
             let sx = inner.x as i32 + enemy.x + sdx;
             let sy = inner.y as i32 + enemy.y + sdy;
@@ -525,18 +504,18 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
     let px = inner.x as i32 + game.player.x + sdx;
     let py = inner.y as i32 + game.player.y + sdy;
     if in_bounds(inner, px, py) {
-        let player_style =
+        let player_color =
             if game.player.invincible_ticks > 0 && game.player.invincible_ticks % 6 < 3 {
-                Color::Yellow // Blink when invincible
+                PLAYER_INVINCIBLE_COLOR
             } else {
-                Color::Cyan
+                PLAYER_COLOR
             };
         set_cell(
             buf,
             px as u16,
             py as u16,
             config::PLAYER_GLYPH,
-            player_style,
+            player_color,
         );
     }
 }
@@ -585,31 +564,17 @@ fn draw_levelup(
     fill_bg(frame, popup_area, dark_mode);
 
     let mut lines = vec![
-        Line::from(Span::styled(
-            " LEVEL UP! ",
-            Style::default()
-                .fg(Color::Yellow)
-                .add_modifier(Modifier::BOLD),
-        )),
+        Line::from(Span::styled(" LEVEL UP! ", popup_header_style())),
         Line::from(""),
     ];
 
-    for (i, choice) in choices.iter().enumerate() {
-        let (prefix, name_color) = if i == selected {
-            (">", Color::Yellow)
-        } else {
-            (" ", Color::Cyan)
-        };
-        lines.push(Line::from(Span::styled(
-            format!(" {} [{}] {} ", prefix, i + 1, choice.name(weapons)),
-            Style::default().fg(name_color),
-        )));
-        lines.push(Line::from(Span::styled(
-            format!("       {}", choice.description(weapons)),
-            Style::default().fg(Color::Gray),
-        )));
-        lines.push(Line::from(""));
-    }
+    push_choice_lines(
+        &mut lines,
+        choices.len(),
+        selected,
+        |i| choices[i].name(weapons),
+        |i| choices[i].description(weapons),
+    );
 
     let popup = Paragraph::new(lines)
         .block(
@@ -647,12 +612,7 @@ fn draw_pause_overlay(frame: &mut Frame, area: Rect, app: &App) {
     let msg_area = Rect::new(inner.x, msg_y, inner.width, msg_height);
 
     let mut lines = vec![
-        Line::from(Span::styled(
-            "PAUSED",
-            Style::default()
-                .fg(Color::Yellow)
-                .add_modifier(Modifier::BOLD),
-        )),
+        Line::from(Span::styled("PAUSED", popup_header_style())),
         Line::from(""),
         Line::from(Span::styled(
             "WEAPONS",
@@ -699,21 +659,21 @@ fn draw_result_popup(
     let game = &app.game;
     let elapsed = Settings::format_ticks(game.elapsed_ticks);
     let dark = app.save.dark_mode;
-    let text_color = if dark { Color::White } else { Color::Reset };
+    let body_color = text_color(dark);
 
     let mut lines = header;
     lines.extend([
         Line::from(Span::styled(
             format!("Time: {}", elapsed),
-            Style::default().fg(text_color),
+            Style::default().fg(body_color),
         )),
         Line::from(Span::styled(
             format!("Level: {}", game.level),
-            Style::default().fg(text_color),
+            Style::default().fg(body_color),
         )),
         Line::from(Span::styled(
             format!("Kills: {}", game.kill_count),
-            Style::default().fg(text_color),
+            Style::default().fg(body_color),
         )),
         Line::from(""),
         Line::from(Span::styled(footer, Style::default().fg(Color::Yellow))),
