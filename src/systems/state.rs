@@ -126,6 +126,10 @@ impl App {
         self.save.toggle_auto_restart();
     }
 
+    pub fn toggle_dark_mode(&mut self) {
+        self.save.toggle_dark_mode();
+    }
+
     pub fn pause(&mut self) {
         if matches!(self.phase, AppPhase::Playing) {
             self.phase = AppPhase::Paused;

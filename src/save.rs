@@ -32,6 +32,8 @@ fn ensure_save_dir() -> Option<PathBuf> {
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct Settings {
     pub auto_restart: bool,
+    #[serde(default)]
+    pub dark_mode: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -85,6 +87,11 @@ impl Settings {
 
     pub fn toggle_auto_restart(&mut self) {
         self.auto_restart = !self.auto_restart;
+        self.save();
+    }
+
+    pub fn toggle_dark_mode(&mut self) {
+        self.dark_mode = !self.dark_mode;
         self.save();
     }
 
