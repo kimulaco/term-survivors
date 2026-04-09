@@ -11,10 +11,56 @@ use crate::entities::weapon::WeaponKind;
 use crate::save::Settings;
 use crate::systems::state::{App, AppPhase};
 
+const DARK_BG: Color = Color::Rgb(8, 29, 53);
+
+fn gauge_fg_style(color: Color, dark: bool) -> Style {
+    if dark {
+        Style::default().fg(color).bg(DARK_BG)
+    } else {
+        Style::default().fg(color)
+    }
+}
+
+fn bg(dark: bool) -> Style {
+    if dark {
+        Style::default().bg(DARK_BG)
+    } else {
+        Style::default()
+    }
+}
+
+fn border_style(dark: bool) -> Style {
+    if dark {
+        Style::default().bg(DARK_BG).fg(Color::White)
+    } else {
+        Style::default()
+    }
+}
+
+/// Clear must run first to erase game-entity characters beneath the popup.
+fn fill_bg(frame: &mut ratatui::Frame, area: Rect, dark: bool) {
+    frame.render_widget(Clear, area);
+    if dark {
+        frame.render_widget(Block::default().style(Style::default().bg(DARK_BG)), area);
+    }
+}
+
+fn popup_rect_top(area: Rect, width: u16, height: u16) -> Rect {
+    let x = area.x + (area.width.saturating_sub(width)) / 2;
+    let y = area.y + config::STATUS_BAR_HEIGHT + 2;
+    Rect::new(x, y, width, height)
+}
+
+fn popup_rect_centered(area: Rect, width: u16, height: u16) -> Rect {
+    let x = area.x + (area.width.saturating_sub(width)) / 2;
+    let y = area.y + (area.height.saturating_sub(height)) / 2;
+    Rect::new(x, y, width, height)
+}
+
 /// Distinct colors per enemy kind — all in red/orange/purple/pink/brown range.
 fn enemy_color(kind: EnemyKind) -> Color {
     match kind {
-        EnemyKind::Bug => Color::Red,
+        EnemyKind::Bug => Color::LightRed,
         EnemyKind::Virus => Color::Rgb(160, 80, 220), // purple
         EnemyKind::Crash => Color::Rgb(255, 140, 0),  // orange
         EnemyKind::MemLeak => Color::Rgb(160, 100, 50), // brown
@@ -26,6 +72,11 @@ fn enemy_color(kind: EnemyKind) -> Color {
 
 pub fn draw(frame: &mut Frame, app: &App) {
     let size = frame.area();
+    let dark = app.save.dark_mode;
+
+    if dark {
+        frame.buffer_mut().set_style(size, bg(dark));
+    }
 
     // Minimum size check
     if size.width < config::MIN_WIDTH || size.height < config::MIN_HEIGHT {
@@ -46,7 +97,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
         AppPhase::Title => draw_title(frame, size, app),
         AppPhase::WeaponSelect(choices, idx) => {
             draw_game(frame, size, app);
-            draw_weapon_select(frame, size, choices, *idx);
+            draw_weapon_select(frame, size, choices, *idx, dark);
         }
         AppPhase::Playing => draw_game(frame, size, app),
         AppPhase::Paused => {
@@ -55,7 +106,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
         }
         AppPhase::LevelUp(choices, idx) => {
             draw_game(frame, size, app);
-            draw_levelup(frame, size, choices, &app.game.weapons, *idx);
+            draw_levelup(frame, size, choices, &app.game.weapons, *idx, dark);
         }
         AppPhase::GameOver => draw_game_over(frame, size, app),
         AppPhase::Cleared => draw_cleared(frame, size, app),
@@ -63,6 +114,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
 }
 
 fn draw_title(frame: &mut Frame, area: Rect, app: &App) {
+    let dark = app.save.dark_mode;
     let enter_line = if app.has_session {
         "║   Press [ENTER] to Continue        ║"
     } else {
@@ -72,6 +124,11 @@ fn draw_title(frame: &mut Frame, area: Rect, app: &App) {
         "║   [A] Auto-Restart: ON             ║"
     } else {
         "║   [A] Auto-Restart: OFF            ║"
+    };
+    let dark_bg_line = if dark {
+        "║   [B] Dark Mode: ON                ║"
+    } else {
+        "║   [B] Dark Mode: OFF               ║"
     };
 
     let mut title_art = vec![
@@ -90,6 +147,7 @@ fn draw_title(frame: &mut Frame, area: Rect, app: &App) {
         "║                                    ║",
         "║   Settings:                        ║",
         auto_restart_line,
+        dark_bg_line,
         "║                                    ║",
         "║   Controls:                        ║",
         "║   WASD - Move                      ║",
@@ -115,14 +173,18 @@ fn draw_title(frame: &mut Frame, area: Rect, app: &App) {
     frame.render_widget(paragraph, area);
 }
 
-fn draw_weapon_select(frame: &mut Frame, area: Rect, choices: &[WeaponKind], selected: usize) {
+fn draw_weapon_select(
+    frame: &mut Frame,
+    area: Rect,
+    choices: &[WeaponKind],
+    selected: usize,
+    dark_mode: bool,
+) {
     let popup_width = 44u16;
     let popup_height = (3 + choices.len() * 3) as u16;
-    let x = area.x + (area.width.saturating_sub(popup_width)) / 2;
-    let y = area.y + config::STATUS_BAR_HEIGHT + 2;
-    let popup_area = Rect::new(x, y, popup_width, popup_height);
+    let popup_area = popup_rect_top(area, popup_width, popup_height);
 
-    frame.render_widget(Clear, popup_area);
+    fill_bg(frame, popup_area, dark_mode);
 
     let mut lines = vec![
         Line::from(Span::styled(
@@ -156,8 +218,9 @@ fn draw_weapon_select(frame: &mut Frame, area: Rect, choices: &[WeaponKind], sel
             Block::default()
                 .borders(Borders::ALL)
                 .title(" Select Weapon ")
-                .style(Style::default().fg(Color::Yellow)),
+                .style(bg(dark_mode).fg(Color::Yellow)),
         )
+        .style(bg(dark_mode))
         .alignment(Alignment::Left);
     frame.render_widget(popup, popup_area);
 }
@@ -189,6 +252,11 @@ fn draw_game(frame: &mut Frame, area: Rect, app: &App) {
 fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
     let game = &app.game;
     let player = &game.player;
+    let dark = app.save.dark_mode;
+
+    if dark {
+        frame.buffer_mut().set_style(area, bg(dark));
+    }
 
     let rows = Layout::vertical([Constraint::Length(3), Constraint::Length(3)]).split(area);
 
@@ -215,8 +283,14 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
         Color::White
     };
     let hp_gauge = Gauge::default()
-        .block(Block::default().borders(Borders::ALL).title(" HP "))
-        .gauge_style(Style::default().fg(hp_color))
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(" HP ")
+                .style(border_style(dark)),
+        )
+        .style(bg(dark))
+        .gauge_style(gauge_fg_style(hp_color, dark))
         .ratio(hp_ratio.clamp(0.0, 1.0))
         .label(Span::styled(
             format!("{}/{}", player.hp, player.max_hp),
@@ -231,7 +305,13 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
         format!(" {}", time_str),
         Style::default().fg(Color::Green),
     ))
-    .block(Block::default().borders(Borders::ALL).title(" Time "));
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title(" Time ")
+            .style(border_style(dark)),
+    )
+    .style(bg(dark));
     frame.render_widget(time_widget, top_chunks[1]);
 
     // Weapons
@@ -249,7 +329,13 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
         format!(" {}", weapon_slots),
         Style::default().fg(Color::Cyan),
     ))
-    .block(Block::default().borders(Borders::ALL).title(" Weapons "));
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title(" Weapons ")
+            .style(border_style(dark)),
+    )
+    .style(bg(dark));
     frame.render_widget(weapons_widget, top_chunks[2]);
 
     // XP gauge (full width, below HP & Info)
@@ -269,9 +355,11 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(format!(" Lv.{} ", game.level)),
+                .title(format!(" Lv.{} ", game.level))
+                .style(border_style(dark)),
         )
-        .gauge_style(Style::default().fg(Color::Cyan))
+        .style(bg(dark))
+        .gauge_style(gauge_fg_style(Color::Cyan, dark))
         .ratio(xp_ratio.clamp(0.0, 1.0))
         .label(Span::styled(
             format!("{}/{}", game.xp, xp_threshold),
@@ -297,7 +385,11 @@ fn draw_boss_hp_bar(buf: &mut Buffer, enemy: &Enemy, inner: Rect, sdx: i32, sdy:
 }
 
 fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
-    let block = Block::default().borders(Borders::ALL).title(" Arena ");
+    let dark = app.save.dark_mode;
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .title(" Arena ")
+        .style(border_style(dark));
     let inner = block.inner(area);
     frame.render_widget(block, area);
 
@@ -306,8 +398,9 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
     let (sdx, sdy) = app.screen_shake_offset();
 
     for proj in &game.projectiles {
-        // Thunder warning indicator (damage=0, weapon_kind_idx=5): 3-phase blink
-        let (glyph, color) = if proj.damage == 0 && proj.weapon_kind_idx == 5 {
+        let wk = WeaponKind::from_idx(proj.weapon_kind_idx);
+        // Thunder warning indicator (damage=0): 3-phase blink
+        let (glyph, color) = if proj.damage == 0 && wk == WeaponKind::Thunder {
             let period: u32 = if proj.ttl > 30 {
                 8
             } else if proj.ttl > 15 {
@@ -324,7 +417,7 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
             } else {
                 ('#', Color::LightRed)
             }
-        } else if proj.weapon_kind_idx == 5 && proj.delay_ticks > 0 {
+        } else if wk == WeaponKind::Thunder && proj.delay_ticks > 0 {
             // Thunder strike cell during warn phase: preview
             if proj.delay_ticks > 30 {
                 ('.', Color::DarkGray)
@@ -333,11 +426,11 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
             } else {
                 ('.', Color::Yellow)
             }
-        } else if proj.weapon_kind_idx == 5 {
+        } else if wk == WeaponKind::Thunder {
             // Thunder strike (active)
             (proj.glyph, Color::White)
-        // Fuse indicator (damage=0, weapon_kind_idx=3): blink + phase change
-        } else if proj.damage == 0 && proj.weapon_kind_idx == 3 {
+        // Fuse indicator (damage=0): blink + phase change
+        } else if proj.damage == 0 && wk == WeaponKind::Bomb {
             let period: u32 = if proj.ttl > 60 {
                 16
             } else if proj.ttl > 30 {
@@ -354,7 +447,7 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
             } else {
                 ('*', Color::LightRed)
             }
-        } else if proj.weapon_kind_idx == 3 && proj.delay_ticks > 0 {
+        } else if wk == WeaponKind::Bomb && proj.delay_ticks > 0 {
             // Bomb explosion cell during fuse: preview color matches fuse indicator phase
             if proj.delay_ticks > 60 {
                 ('.', Color::DarkGray)
@@ -363,16 +456,13 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
             } else {
                 ('.', Color::Yellow)
             }
-        } else if proj.weapon_kind_idx == 3 {
+        } else if wk == WeaponKind::Bomb {
             // Bomb explosion cell detonating
             (proj.glyph, Color::Yellow)
         } else {
-            let c = match proj.weapon_kind_idx {
-                0 => Color::LightBlue, // Orbit
-                1 => Color::Yellow,    // Laser
-                2 => Color::Cyan,      // Drone
-                4 => Color::LightBlue, // Scatter
-                _ => Color::LightBlue,
+            let c = match wk {
+                WeaponKind::Laser => Color::Yellow,
+                _ => Color::Cyan,
             };
             (proj.glyph, c)
         };
@@ -439,7 +529,7 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
             if game.player.invincible_ticks > 0 && game.player.invincible_ticks % 6 < 3 {
                 Color::Yellow // Blink when invincible
             } else {
-                Color::LightBlue
+                Color::Cyan
             };
         set_cell(
             buf,
@@ -486,14 +576,13 @@ fn draw_levelup(
     choices: &[crate::systems::levelup::Upgrade],
     weapons: &[crate::entities::weapon::Weapon],
     selected: usize,
+    dark_mode: bool,
 ) {
     let popup_width = 40u16;
     let popup_height = (3 + choices.len() * 3) as u16;
-    let x = area.x + (area.width.saturating_sub(popup_width)) / 2;
-    let y = area.y + config::STATUS_BAR_HEIGHT + 2;
-    let popup_area = Rect::new(x, y, popup_width, popup_height);
+    let popup_area = popup_rect_top(area, popup_width, popup_height);
 
-    frame.render_widget(Clear, popup_area);
+    fill_bg(frame, popup_area, dark_mode);
 
     let mut lines = vec![
         Line::from(Span::styled(
@@ -527,13 +616,15 @@ fn draw_levelup(
             Block::default()
                 .borders(Borders::ALL)
                 .title(" Choose Upgrade ")
-                .style(Style::default().fg(Color::Yellow)),
+                .style(bg(dark_mode).fg(Color::Yellow)),
         )
+        .style(bg(dark_mode))
         .alignment(Alignment::Left);
     frame.render_widget(popup, popup_area);
 }
 
 fn draw_pause_overlay(frame: &mut Frame, area: Rect, app: &App) {
+    let dark = app.save.dark_mode;
     let max_w = (config::MAX_FIELD_WIDTH as u16 + 2).min(area.width);
     let max_h = (config::MAX_FIELD_HEIGHT as u16 + 2)
         .min(area.height.saturating_sub(config::STATUS_BAR_HEIGHT));
@@ -541,12 +632,12 @@ fn draw_pause_overlay(frame: &mut Frame, area: Rect, app: &App) {
     let arena_y = area.y + config::STATUS_BAR_HEIGHT;
     let arena_area = Rect::new(arena_x, arena_y, max_w, max_h);
 
-    frame.render_widget(Clear, arena_area);
+    fill_bg(frame, arena_area, dark);
 
     let block = Block::default()
         .borders(Borders::ALL)
         .title(" Arena ")
-        .style(Style::default().fg(Color::DarkGray));
+        .style(bg(dark).fg(Color::DarkGray));
     let inner = block.inner(arena_area);
     frame.render_widget(block, arena_area);
 
@@ -596,79 +687,94 @@ fn draw_pause_overlay(frame: &mut Frame, area: Rect, app: &App) {
     frame.render_widget(para, msg_area);
 }
 
-fn draw_game_over(frame: &mut Frame, area: Rect, app: &App) {
+fn draw_result_popup(
+    frame: &mut Frame,
+    area: Rect,
+    app: &App,
+    title: &str,
+    header: Vec<Line>,
+    footer: &str,
+    popup_height: u16,
+) {
     let game = &app.game;
     let elapsed = Settings::format_ticks(game.elapsed_ticks);
+    let dark = app.save.dark_mode;
+    let text_color = if dark { Color::White } else { Color::Reset };
 
-    let lines = vec![
-        Line::from(""),
+    let mut lines = header;
+    lines.extend([
         Line::from(Span::styled(
-            "GAME OVER",
-            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+            format!("Time: {}", elapsed),
+            Style::default().fg(text_color),
+        )),
+        Line::from(Span::styled(
+            format!("Level: {}", game.level),
+            Style::default().fg(text_color),
+        )),
+        Line::from(Span::styled(
+            format!("Kills: {}", game.kill_count),
+            Style::default().fg(text_color),
         )),
         Line::from(""),
-        Line::from(format!("Time: {}", elapsed)),
-        Line::from(format!("Level: {}", game.level)),
-        Line::from(format!("Kills: {}", game.kill_count)),
-        Line::from(""),
-        Line::from(Span::styled(
-            "[R] Retry  [Q] Quit",
-            Style::default().fg(Color::Yellow),
-        )),
-    ];
+        Line::from(Span::styled(footer, Style::default().fg(Color::Yellow))),
+    ]);
 
     let paragraph = Paragraph::new(lines)
-        .block(Block::default().borders(Borders::ALL).title(" Result "))
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(title)
+                .style(border_style(dark)),
+        )
+        .style(bg(dark))
         .alignment(Alignment::Center);
 
-    let popup_width = 36u16;
-    let popup_height = 10u16;
-    let x = area.x + (area.width.saturating_sub(popup_width)) / 2;
-    let y = area.y + (area.height.saturating_sub(popup_height)) / 2;
-    let popup_area = Rect::new(x, y, popup_width, popup_height);
-
-    frame.render_widget(Clear, popup_area);
+    let popup_area = popup_rect_centered(area, 36, popup_height);
+    fill_bg(frame, popup_area, dark);
     frame.render_widget(paragraph, popup_area);
 }
 
+fn draw_game_over(frame: &mut Frame, area: Rect, app: &App) {
+    draw_result_popup(
+        frame,
+        area,
+        app,
+        " Result ",
+        vec![
+            Line::from(""),
+            Line::from(Span::styled(
+                "GAME OVER",
+                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+            )),
+            Line::from(""),
+        ],
+        "[R] Retry  [Q] Quit",
+        10,
+    );
+}
+
 fn draw_cleared(frame: &mut Frame, area: Rect, app: &App) {
-    let game = &app.game;
-    let elapsed = Settings::format_ticks(game.elapsed_ticks);
-
-    let lines = vec![
-        Line::from(""),
-        Line::from(Span::styled(
-            "★ CLEARED! ★",
-            Style::default()
-                .fg(Color::Green)
-                .add_modifier(Modifier::BOLD),
-        )),
-        Line::from(""),
-        Line::from(Span::styled(
-            "You defeated the Kernel Panic!",
-            Style::default().fg(Color::Cyan),
-        )),
-        Line::from(""),
-        Line::from(format!("Time: {}", elapsed)),
-        Line::from(format!("Level: {}", game.level)),
-        Line::from(format!("Kills: {}", game.kill_count)),
-        Line::from(""),
-        Line::from(Span::styled(
-            "[R] Play Again  [Q] Quit",
-            Style::default().fg(Color::Yellow),
-        )),
-    ];
-
-    let paragraph = Paragraph::new(lines)
-        .block(Block::default().borders(Borders::ALL).title(" Victory! "))
-        .alignment(Alignment::Center);
-
-    let popup_width = 36u16;
-    let popup_height = 12u16;
-    let x = area.x + (area.width.saturating_sub(popup_width)) / 2;
-    let y = area.y + (area.height.saturating_sub(popup_height)) / 2;
-    let popup_area = Rect::new(x, y, popup_width, popup_height);
-
-    frame.render_widget(Clear, popup_area);
-    frame.render_widget(paragraph, popup_area);
+    draw_result_popup(
+        frame,
+        area,
+        app,
+        " Victory! ",
+        vec![
+            Line::from(""),
+            Line::from(Span::styled(
+                "★ CLEARED! ★",
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            )),
+            Line::from(""),
+            Line::from(Span::styled(
+                "You defeated the Kernel Panic!",
+                Style::default().fg(Color::Cyan),
+            )),
+            Line::from(""),
+        ],
+        "[R] Play Again  [Q] Quit",
+        12,
+    );
 }

@@ -194,6 +194,7 @@ fn run_game() -> io::Result<()> {
                             }
                             KeyCode::Char('n') => app.start_game(),
                             KeyCode::Char('a') => app.toggle_auto_restart(),
+                            KeyCode::Char('b') => app.toggle_dark_mode(),
                             KeyCode::Esc => {
                                 should_break = true;
                                 break;

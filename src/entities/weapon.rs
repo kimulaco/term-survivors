@@ -59,6 +59,17 @@ impl WeaponKind {
             WeaponKind::Thunder => 5,
         }
     }
+
+    pub fn from_idx(idx: u8) -> Self {
+        match idx {
+            0 => WeaponKind::Orbit,
+            1 => WeaponKind::Laser,
+            2 => WeaponKind::Drone,
+            3 => WeaponKind::Bomb,
+            4 => WeaponKind::Scatter,
+            _ => WeaponKind::Thunder,
+        }
+    }
 }
 
 /// Per-variant runtime state for a weapon instance.
