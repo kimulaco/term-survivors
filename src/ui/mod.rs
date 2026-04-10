@@ -13,12 +13,12 @@ use crate::systems::state::{App, AppPhase};
 
 mod theme;
 use theme::{
-    bg, border_style, enemy_color, gauge_fg_style, gauge_label_color, popup_header_style,
-    text_color, BOMB_EXPLODE_COLOR, BOMB_FUSE_FAR_COLOR, BOMB_FUSE_MID_COLOR, BOMB_FUSE_NEAR_COLOR,
-    BOSS_HP_BAR_COLOR, DARK_BG, DEFAULT_PROJECTILE_COLOR, DELAY_PREVIEW_FAR_COLOR,
-    DELAY_PREVIEW_MID_COLOR, DELAY_PREVIEW_NEAR_COLOR, HP_HIGH_COLOR, HP_LOW_COLOR, HP_MID_COLOR,
-    LASER_COLOR, PLAYER_COLOR, PLAYER_INVINCIBLE_COLOR, THUNDER_ACTIVE_COLOR,
-    THUNDER_WARN_FAR_COLOR, THUNDER_WARN_MID_COLOR, THUNDER_WARN_NEAR_COLOR,
+    bg, border_style, border_style_damage, enemy_color, gauge_fg_style, gauge_label_color,
+    popup_header_style, text_color, BOMB_EXPLODE_COLOR, BOMB_FUSE_FAR_COLOR, BOMB_FUSE_MID_COLOR,
+    BOMB_FUSE_NEAR_COLOR, BOSS_HP_BAR_COLOR, DARK_BG, DEFAULT_PROJECTILE_COLOR,
+    DELAY_PREVIEW_FAR_COLOR, DELAY_PREVIEW_MID_COLOR, DELAY_PREVIEW_NEAR_COLOR, HP_HIGH_COLOR,
+    HP_LOW_COLOR, HP_MID_COLOR, LASER_COLOR, PLAYER_COLOR, PLAYER_INVINCIBLE_COLOR,
+    THUNDER_ACTIVE_COLOR, THUNDER_WARN_FAR_COLOR, THUNDER_WARN_MID_COLOR, THUNDER_WARN_NEAR_COLOR,
 };
 
 /// Clear must run first to erase game-entity characters beneath the popup.
@@ -239,6 +239,7 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
     let game = &app.game;
     let player = &game.player;
     let dark = app.save.dark_mode;
+    let block_style = border_style_damage(dark, app.is_damage_flash_active());
 
     if dark {
         frame.buffer_mut().set_style(area, bg(dark));
@@ -267,7 +268,7 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
             Block::default()
                 .borders(Borders::ALL)
                 .title(" HP ")
-                .style(border_style(dark)),
+                .style(block_style),
         )
         .style(bg(dark))
         .gauge_style(gauge_fg_style(hp_color, dark))
@@ -289,7 +290,7 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
         Block::default()
             .borders(Borders::ALL)
             .title(" Time ")
-            .style(border_style(dark)),
+            .style(block_style),
     )
     .style(bg(dark));
     frame.render_widget(time_widget, top_chunks[1]);
@@ -313,7 +314,7 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
         Block::default()
             .borders(Borders::ALL)
             .title(" Weapons ")
-            .style(border_style(dark)),
+            .style(block_style),
     )
     .style(bg(dark));
     frame.render_widget(weapons_widget, top_chunks[2]);
@@ -330,7 +331,7 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
             Block::default()
                 .borders(Borders::ALL)
                 .title(format!(" Lv.{} ", game.level))
-                .style(border_style(dark)),
+                .style(block_style),
         )
         .style(bg(dark))
         .gauge_style(gauge_fg_style(Color::Cyan, dark))
@@ -394,10 +395,11 @@ fn draw_boss_hp_bar(buf: &mut Buffer, enemy: &Enemy, inner: Rect, sdx: i32, sdy:
 
 fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
     let dark = app.save.dark_mode;
+    let arena_style = border_style_damage(dark, app.is_damage_flash_active());
     let block = Block::default()
         .borders(Borders::ALL)
         .title(" Arena ")
-        .style(border_style(dark));
+        .style(arena_style);
     let inner = block.inner(area);
     frame.render_widget(block, area);
 
