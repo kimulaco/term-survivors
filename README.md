@@ -24,6 +24,10 @@ npm install -g term-survivors
 
 # cargo
 cargo install term-survivors
+
+# Homebrew
+brew tap kimulaco/term-survivors
+brew install term-survivors
 ```
 
 Then run:
