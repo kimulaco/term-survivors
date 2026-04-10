@@ -85,6 +85,17 @@ pub fn border_style(dark: bool) -> Style {
     }
 }
 
+pub const DAMAGE_FLASH_COLOR: Color = Color::LightRed;
+
+pub fn border_style_damage(dark: bool, flash: bool) -> Style {
+    let style = border_style(dark);
+    if flash {
+        style.fg(DAMAGE_FLASH_COLOR)
+    } else {
+        style
+    }
+}
+
 pub fn gauge_fg_style(color: Color, dark: bool) -> Style {
     if dark {
         Style::default().fg(color).bg(DARK_BG)

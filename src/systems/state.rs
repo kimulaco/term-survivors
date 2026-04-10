@@ -32,6 +32,7 @@ pub struct App {
     pub dx: i32,
     pub dy: i32,
     pub screen_shake_ticks: u32,
+    pub damage_flash_ticks: u32,
 }
 
 impl App {
@@ -45,6 +46,7 @@ impl App {
             dx: 0,
             dy: 0,
             screen_shake_ticks: 0,
+            damage_flash_ticks: 0,
         };
         if has_session && app.save.auto_restart {
             app.resume_game();
@@ -67,6 +69,12 @@ impl App {
             2 => (0, 1),
             _ => (0, -1),
         }
+    }
+
+    pub fn is_damage_flash_active(&self) -> bool {
+        self.damage_flash_ticks > 0
+            && self.damage_flash_ticks % config::DAMAGE_FLASH_CYCLE
+                < config::DAMAGE_FLASH_ON_THRESHOLD
     }
 
     pub fn start_game(&mut self) {
@@ -146,10 +154,14 @@ impl App {
         if self.screen_shake_ticks > 0 {
             self.screen_shake_ticks -= 1;
         }
+        if self.damage_flash_ticks > 0 {
+            self.damage_flash_ticks -= 1;
+        }
         if let AppPhase::Playing = &self.phase {
             let result = self.game.tick(self.dx, self.dy);
             if result.screen_shake > 0 {
                 self.screen_shake_ticks = result.screen_shake;
+                self.damage_flash_ticks = config::DAMAGE_FLASH_DURATION;
             }
             match result.outcome {
                 TickOutcome::Continue => {}
