@@ -20,6 +20,7 @@ pub enum AppPhase {
     Playing,
     Paused,
     LevelUp(Vec<Upgrade>, usize),
+    Dead { ticks_remaining: u32 },
     GameOver,
     Cleared,
 }
@@ -75,6 +76,19 @@ impl App {
         self.damage_flash_ticks > 0
             && self.damage_flash_ticks % config::DAMAGE_FLASH_CYCLE
                 < config::DAMAGE_FLASH_ON_THRESHOLD
+    }
+
+    pub fn is_damage_border_active(&self) -> bool {
+        self.is_damage_flash_active() || matches!(self.phase, AppPhase::Dead { .. })
+    }
+
+    fn end_game(&mut self, phase: AppPhase) {
+        if self.save.auto_restart {
+            self.start_game();
+        } else {
+            GameSaveData::delete();
+            self.phase = phase;
+        }
     }
 
     pub fn start_game(&mut self) {
@@ -157,6 +171,16 @@ impl App {
         if self.damage_flash_ticks > 0 {
             self.damage_flash_ticks -= 1;
         }
+        if let AppPhase::Dead { ticks_remaining } = self.phase {
+            let _ = self.game.tick(0, 0); // drives enemy movement; outcome is always GameOver and ignored
+            if ticks_remaining == 0 {
+                self.end_game(AppPhase::GameOver);
+            } else {
+                self.phase = AppPhase::Dead {
+                    ticks_remaining: ticks_remaining - 1,
+                };
+            }
+        }
         if let AppPhase::Playing = &self.phase {
             let result = self.game.tick(self.dx, self.dy);
             if result.screen_shake > 0 {
@@ -174,12 +198,11 @@ impl App {
                         self.game.level,
                         Settings::format_ticks(self.game.elapsed_ticks),
                     ));
-                    GameSaveData::delete();
-                    if self.save.auto_restart {
-                        self.start_game();
-                    } else {
-                        self.phase = AppPhase::GameOver;
-                    }
+                    self.screen_shake_ticks = 0;
+                    self.damage_flash_ticks = 0;
+                    self.phase = AppPhase::Dead {
+                        ticks_remaining: config::DEAD_ANIMATION_TICKS,
+                    };
                 }
                 TickOutcome::Cleared => {
                     crate::logger::info(&format!(
@@ -187,12 +210,7 @@ impl App {
                         self.game.level,
                         Settings::format_ticks(self.game.elapsed_ticks),
                     ));
-                    GameSaveData::delete();
-                    if self.save.auto_restart {
-                        self.start_game();
-                    } else {
-                        self.phase = AppPhase::Cleared;
-                    }
+                    self.end_game(AppPhase::Cleared);
                 }
             }
         }

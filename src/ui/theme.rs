@@ -1,12 +1,14 @@
 use ratatui::style::{Color, Modifier, Style};
 
 use crate::entities::enemy::EnemyKind;
+use crate::entities::player::Player;
 
 pub const DARK_BG: Color = Color::Rgb(8, 29, 53);
 
 // Player
 pub const PLAYER_COLOR: Color = Color::Cyan;
 pub const PLAYER_INVINCIBLE_COLOR: Color = Color::Yellow;
+pub const PLAYER_DEAD_COLOR: Color = Color::DarkGray;
 
 // HP / XP gauge fill colors
 pub const HP_HIGH_COLOR: Color = Color::Green;
@@ -36,6 +38,17 @@ pub const BOMB_EXPLODE_COLOR: Color = Color::Yellow;
 
 // Boss HP bar
 pub const BOSS_HP_BAR_COLOR: Color = Color::Red;
+
+/// Priority: dead > invincible blink > normal.
+pub fn player_color(player: &Player) -> Color {
+    if player.is_dead() {
+        PLAYER_DEAD_COLOR
+    } else if player.invincible_ticks > 0 && player.invincible_ticks % 6 < 3 {
+        PLAYER_INVINCIBLE_COLOR
+    } else {
+        PLAYER_COLOR
+    }
+}
 
 /// Distinct colors per enemy kind — all in red/orange/purple/pink/brown range.
 pub fn enemy_color(kind: EnemyKind) -> Color {
