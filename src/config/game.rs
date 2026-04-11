@@ -11,3 +11,5 @@ pub const GAME_DURATION_TICKS: u32 = 60 * 60 * 5; // 18000 ticks
 
 // Maximum number of enemies on screen at once (farthest are culled)
 pub const MAX_ENEMY_COUNT: usize = 200;
+
+pub const DEAD_ANIMATION_TICKS: u32 = 60 * 2;

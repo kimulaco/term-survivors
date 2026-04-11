@@ -287,6 +287,7 @@ fn run_game() -> io::Result<()> {
                                 _ => {}
                             }
                         }
+                        AppPhase::Dead { .. } => {}
                         AppPhase::GameOver | AppPhase::Cleared => match key.code {
                             KeyCode::Char('r') => app.start_game(),
                             KeyCode::Char('q') | KeyCode::Esc => {

@@ -82,64 +82,67 @@ impl GameState {
     }
 
     pub fn tick(&mut self, dx: i32, dy: i32) -> TickResult {
-        self.elapsed_ticks += 1;
+        if !self.player.is_dead() {
+            self.elapsed_ticks += 1;
+        }
 
         // Move player
         self.player
             .update(dx, dy, self.field_width, self.field_height);
 
-        // Spawn regular enemies (includes Boss)
-        if let Some(mut enemy) = enemy::spawn_enemy(
-            self.elapsed_ticks,
-            &mut self.spawn_timer,
-            self.field_width,
-            self.field_height,
-            self.boss_state != BossState::NotSpawned,
-        ) {
-            enemy.id = self.next_enemy_id;
-            self.next_enemy_id += 1;
-            if enemy.kind == EnemyKind::Boss {
-                self.boss_state = BossState::Alive;
+        if !self.player.is_dead() {
+            // Spawn regular enemies (includes Boss)
+            if let Some(mut enemy) = enemy::spawn_enemy(
+                self.elapsed_ticks,
+                &mut self.spawn_timer,
+                self.field_width,
+                self.field_height,
+                self.boss_state != BossState::NotSpawned,
+            ) {
+                enemy.id = self.next_enemy_id;
+                self.next_enemy_id += 1;
+                if enemy.kind == EnemyKind::Boss {
+                    self.boss_state = BossState::Alive;
+                }
+                self.enemies.push(enemy);
             }
-            self.enemies.push(enemy);
-        }
 
-        // Spawn MidBoss periodically until Boss arrives
-        if let config::SpawnBehavior::Periodic {
-            first_tick,
-            interval_ticks,
-            max_alive,
-        } = config::ENEMY_MIDBOSS.spawn
-        {
-            if self.elapsed_ticks >= first_tick && self.boss_state == BossState::NotSpawned {
-                self.mid_boss_spawn_timer += 1;
-                let mid_boss_alive = self
-                    .enemies
-                    .iter()
-                    .filter(|e| e.kind == EnemyKind::MidBoss)
-                    .count();
-                if self.mid_boss_spawn_timer >= interval_ticks && mid_boss_alive < max_alive {
-                    self.mid_boss_spawn_timer = 0;
-                    let mut mb = Enemy::new(
-                        EnemyKind::MidBoss,
-                        self.field_width / 2 - config::ENEMY_MIDBOSS.width / 2,
-                        0,
-                    );
-                    mb.id = self.next_enemy_id;
-                    self.next_enemy_id += 1;
-                    self.enemies.push(mb);
+            // Spawn MidBoss periodically until Boss arrives
+            if let config::SpawnBehavior::Periodic {
+                first_tick,
+                interval_ticks,
+                max_alive,
+            } = config::ENEMY_MIDBOSS.spawn
+            {
+                if self.elapsed_ticks >= first_tick && self.boss_state == BossState::NotSpawned {
+                    self.mid_boss_spawn_timer += 1;
+                    let mid_boss_alive = self
+                        .enemies
+                        .iter()
+                        .filter(|e| e.kind == EnemyKind::MidBoss)
+                        .count();
+                    if self.mid_boss_spawn_timer >= interval_ticks && mid_boss_alive < max_alive {
+                        self.mid_boss_spawn_timer = 0;
+                        let mut mb = Enemy::new(
+                            EnemyKind::MidBoss,
+                            self.field_width / 2 - config::ENEMY_MIDBOSS.width / 2,
+                            0,
+                        );
+                        mb.id = self.next_enemy_id;
+                        self.next_enemy_id += 1;
+                        self.enemies.push(mb);
+                    }
                 }
             }
-        }
 
-        // Cap enemy count
-        if self.enemies.len() > config::MAX_ENEMY_COUNT {
-            // Remove farthest enemies
-            let px = self.player.x;
-            let py = self.player.y;
-            self.enemies
-                .sort_by_key(|e| Reverse((e.x - px).abs() + (e.y - py).abs()));
-            self.enemies.truncate(config::MAX_ENEMY_COUNT);
+            // Cap enemy count
+            if self.enemies.len() > config::MAX_ENEMY_COUNT {
+                let px = self.player.x;
+                let py = self.player.y;
+                self.enemies
+                    .sort_by_key(|e| Reverse((e.x - px).abs() + (e.y - py).abs()));
+                self.enemies.truncate(config::MAX_ENEMY_COUNT);
+            }
         }
 
         // Move enemies
@@ -156,50 +159,54 @@ impl GameState {
 
         // Fire weapons
         self.projectile_buf.clear();
-        let facing = self.player.facing;
-        for weapon in &mut self.weapons {
-            weapon.update(
-                self.player.x,
-                self.player.y,
-                &mut self.projectile_buf,
-                &self.enemy_pos_buf,
-                facing,
-            );
+        if !self.player.is_dead() {
+            let facing = self.player.facing;
+            for weapon in &mut self.weapons {
+                weapon.update(
+                    self.player.x,
+                    self.player.y,
+                    &mut self.projectile_buf,
+                    &self.enemy_pos_buf,
+                    facing,
+                );
+            }
         }
         self.projectiles.append(&mut self.projectile_buf);
         for proj in &mut self.projectiles {
             proj.update(self.player.x, self.player.y, &self.enemy_pos_buf);
         }
 
-        // Combat: projectiles vs enemies
-        let result = combat::process_combat(
-            &mut self.projectiles,
-            &mut self.enemies,
-            self.player.x,
-            self.player.y,
-        );
-        self.xp += result.xp_gained;
-        self.kill_count += result.kills;
+        if !self.player.is_dead() {
+            // Combat: projectiles vs enemies
+            let result = combat::process_combat(
+                &mut self.projectiles,
+                &mut self.enemies,
+                self.player.x,
+                self.player.y,
+            );
+            self.xp += result.xp_gained;
+            self.kill_count += result.kills;
 
-        // Check if boss was killed
-        if self.boss_state == BossState::Alive
-            && !self.enemies.iter().any(|e| e.kind == EnemyKind::Boss)
-        {
-            self.boss_state = BossState::Defeated;
-            return TickResult {
-                outcome: TickOutcome::Cleared,
-                screen_shake: 0,
-            };
+            // Check if boss was killed
+            if self.boss_state == BossState::Alive
+                && !self.enemies.iter().any(|e| e.kind == EnemyKind::Boss)
+            {
+                self.boss_state = BossState::Defeated;
+                return TickResult {
+                    outcome: TickOutcome::Cleared,
+                    screen_shake: 0,
+                };
+            }
         }
 
         // Enemy-player contact
         let screen_shake = combat::process_enemy_contact(&mut self.enemies, &mut self.player);
 
-        // Clean up expired projectiles
-        self.projectiles.retain(|p| !p.is_expired() && p.pierce > 0);
-
-        // Clamp projectiles to field (remove out-of-bounds)
+        // Remove expired and out-of-bounds projectiles
         self.projectiles.retain(|p| {
+            if p.is_expired() || p.pierce == 0 {
+                return false;
+            }
             let w = p.width.max(1);
             let h = p.height.max(1);
             p.x < self.field_width + 5

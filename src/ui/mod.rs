@@ -14,10 +14,10 @@ use crate::systems::state::{App, AppPhase};
 mod theme;
 use theme::{
     bg, border_style, border_style_damage, enemy_color, gauge_fg_style, gauge_label_color,
-    popup_header_style, text_color, BOMB_EXPLODE_COLOR, BOMB_FUSE_FAR_COLOR, BOMB_FUSE_MID_COLOR,
-    BOMB_FUSE_NEAR_COLOR, BOSS_HP_BAR_COLOR, DARK_BG, DEFAULT_PROJECTILE_COLOR,
-    DELAY_PREVIEW_FAR_COLOR, DELAY_PREVIEW_MID_COLOR, DELAY_PREVIEW_NEAR_COLOR, HP_HIGH_COLOR,
-    HP_LOW_COLOR, HP_MID_COLOR, LASER_COLOR, PLAYER_COLOR, PLAYER_INVINCIBLE_COLOR,
+    player_color, popup_header_style, text_color, BOMB_EXPLODE_COLOR, BOMB_FUSE_FAR_COLOR,
+    BOMB_FUSE_MID_COLOR, BOMB_FUSE_NEAR_COLOR, BOSS_HP_BAR_COLOR, DARK_BG,
+    DEFAULT_PROJECTILE_COLOR, DELAY_PREVIEW_FAR_COLOR, DELAY_PREVIEW_MID_COLOR,
+    DELAY_PREVIEW_NEAR_COLOR, HP_HIGH_COLOR, HP_LOW_COLOR, HP_MID_COLOR, LASER_COLOR,
     THUNDER_ACTIVE_COLOR, THUNDER_WARN_FAR_COLOR, THUNDER_WARN_MID_COLOR, THUNDER_WARN_NEAR_COLOR,
 };
 
@@ -70,7 +70,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
             draw_game(frame, size, app);
             draw_weapon_select(frame, size, choices, *idx, dark);
         }
-        AppPhase::Playing => draw_game(frame, size, app),
+        AppPhase::Playing | AppPhase::Dead { .. } => draw_game(frame, size, app),
         AppPhase::Paused => {
             draw_game(frame, size, app);
             draw_pause_overlay(frame, size, app);
@@ -239,7 +239,7 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, app: &App) {
     let game = &app.game;
     let player = &game.player;
     let dark = app.save.dark_mode;
-    let block_style = border_style_damage(dark, app.is_damage_flash_active());
+    let block_style = border_style_damage(dark, app.is_damage_border_active());
 
     if dark {
         frame.buffer_mut().set_style(area, bg(dark));
@@ -395,7 +395,7 @@ fn draw_boss_hp_bar(buf: &mut Buffer, enemy: &Enemy, inner: Rect, sdx: i32, sdy:
 
 fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
     let dark = app.save.dark_mode;
-    let arena_style = border_style_damage(dark, app.is_damage_flash_active());
+    let arena_style = border_style_damage(dark, app.is_damage_border_active());
     let block = Block::default()
         .borders(Borders::ALL)
         .title(" Arena ")
@@ -506,12 +506,7 @@ fn draw_field(frame: &mut Frame, area: Rect, app: &App) {
     let px = inner.x as i32 + game.player.x + sdx;
     let py = inner.y as i32 + game.player.y + sdy;
     if in_bounds(inner, px, py) {
-        let player_color =
-            if game.player.invincible_ticks > 0 && game.player.invincible_ticks % 6 < 3 {
-                PLAYER_INVINCIBLE_COLOR
-            } else {
-                PLAYER_COLOR
-            };
+        let player_color = player_color(&game.player);
         set_cell(
             buf,
             px as u16,
