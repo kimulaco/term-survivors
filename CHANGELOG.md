@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/kimulaco/term-survivors/releases/tag/v0.4.0) - 2026-04-12
+
+### Game updates
+
+- feat: update to final wave more difficult (https://github.com/kimulaco/term-survivors/pull/22)
+- feat: add game over effect (https://github.com/kimulaco/term-survivors/pull/21)
+- feat: add player damage effect (https://github.com/kimulaco/term-survivors/pull/20)
+
+### Other changes
+
+- doc: update game overview and control guide (https://github.com/kimulaco/term-survivors/pull/23)
+
 ## [0.3.0](https://github.com/kimulaco/term-survivors/releases/tag/v0.3.0) - 2026-04-09
 
 ### Game updates
