@@ -58,14 +58,23 @@ COMMANDS:
 
 Keyboard only. Mouse is not supported.
 
+### In Game
+
 | Key | Action |
 |-----|--------|
 | `W` `A` `S` `D` / Arrow keys | Move |
-| `Space` | Pause / resume (during play) |
+| `Space` | Pause / resume |
 | `1` `2` `3` | Choose upgrade on level up |
+| `M` | Return to title |
+
+### Menus & Screens
+
+| Key | Action |
+|-----|--------|
 | `Enter` | Start game / resume saved session (title screen) |
 | `N` | Start new game (title screen) |
-| `M` | Return to title (during play) |
+| `A` | Toggle auto restart (title screen) |
+| `B` | Toggle dark mode (title screen) |
 | `R` | Retry after game over / clear |
 | `Q` / `ESC` | Quit |
 
