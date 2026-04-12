@@ -1,3 +1,10 @@
+[![npm](https://img.shields.io/npm/v/term-survivors?color=blue)](https://www.npmjs.com/package/term-survivors)
+[![crates.io](https://img.shields.io/crates/v/term-survivors?color=blue)](https://crates.io/crates/term-survivors)
+![npm downloads](https://img.shields.io/npm/d18m/term-survivors?color=blue)
+![GitHub Actions](https://img.shields.io/github/actions/workflow/status/kimulaco/term-survivors/test.yml?color=97ca00)
+![MIT License](https://img.shields.io/github/license/kimulaco/term-survivors)
+[![GitHub Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=ff69b4)](https://github.com/sponsors/kimulaco)
+
 # Term Survivors
 
 > **Note:** This project is currently under development. Features and APIs may change without notice.
