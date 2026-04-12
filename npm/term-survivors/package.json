@@ -1,6 +1,6 @@
 {
   "name": "term-survivors",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A Vampire Survivors-like roguelike shooter that runs in the terminal",
   "keywords": [
     "game",
@@ -25,10 +25,10 @@
     "term-survivors": "index.js"
   },
   "optionalDependencies": {
-    "@term-survivors/darwin-arm64": "0.3.0",
-    "@term-survivors/darwin-x64": "0.3.0",
-    "@term-survivors/linux-x64": "0.3.0",
-    "@term-survivors/linux-arm64": "0.3.0",
-    "@term-survivors/win32-x64": "0.3.0"
+    "@term-survivors/darwin-arm64": "0.4.0",
+    "@term-survivors/darwin-x64": "0.4.0",
+    "@term-survivors/linux-x64": "0.4.0",
+    "@term-survivors/linux-arm64": "0.4.0",
+    "@term-survivors/win32-x64": "0.4.0"
   }
 }
