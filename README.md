@@ -4,11 +4,13 @@
 
 A Vampire Survivors-like roguelike shooter that runs in the terminal.
 
-## Overview
+Survive waves of enemies for 5+ minutes and defeat the final boss to clear the game. Weapons fire automatically.
 
-Survive waves of enemies for 5+ minutes and defeat the final boss to clear the game. Weapons fire automatically — just move and stay alive.
+Start quickly, pause anytime, and resume right where you left off — perfect for short breaks between AI-assisted work sessions.
 
-- Platforms: macOS / Linux / Windows
+<div align="center"><img src="./docs/assets/gameplay.png" alt="Game play image" width="600" height="445"></div>
+
+Platforms: macOS / Linux / Windows
 
 ## Play
 
