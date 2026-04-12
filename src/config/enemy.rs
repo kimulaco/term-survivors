@@ -117,10 +117,11 @@ pub const ENEMY_MIDBOSS: EnemyStats = EnemyStats {
         max_alive: 1,
     },
 };
+
 // Final boss (spawns at 4:30, defeating it clears the game)
 pub const ENEMY_BOSS: EnemyStats = EnemyStats {
     name: "Kernel Panic",
-    hp: 1500,
+    hp: 3000,
     speed: 2.0,
     damage: 60,
     xp_value: 200,
@@ -144,5 +145,5 @@ pub const SPAWN_TABLE: [(u32, u32, u8); 8] = [
     (60 * 90, 24, 0b01111),  // 1:30 - +MemLeak, every 0.40s
     (60 * 150, 18, 0b11111), // 2:30 - +Elite, every 0.30s
     (60 * 210, 13, 0b11111), // 3:30 - every 0.22s
-    (60 * 270, 8, 0b11111),  // 4:30 - max intensity (boss arrives)
+    (60 * 270, 4, 0b11111),  // 4:30 - final wave (boss arrives)
 ];
