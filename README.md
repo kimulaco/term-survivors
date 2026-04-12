@@ -1,14 +1,23 @@
+[![npm](https://img.shields.io/npm/v/term-survivors?color=blue)](https://www.npmjs.com/package/term-survivors)
+[![crates.io](https://img.shields.io/crates/v/term-survivors?color=blue)](https://crates.io/crates/term-survivors)
+![npm downloads](https://img.shields.io/npm/d18m/term-survivors?color=blue)
+![GitHub Actions](https://img.shields.io/github/actions/workflow/status/kimulaco/term-survivors/test.yml?color=97ca00)
+![MIT License](https://img.shields.io/github/license/kimulaco/term-survivors)
+[![GitHub Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=ff69b4)](https://github.com/sponsors/kimulaco)
+
 # Term Survivors
 
 > **Note:** This project is currently under development. Features and APIs may change without notice.
 
 A Vampire Survivors-like roguelike shooter that runs in the terminal.
 
-## Overview
+Survive waves of enemies for 5+ minutes and defeat the final boss to clear the game. Weapons fire automatically.
 
-Survive waves of enemies for 5+ minutes and defeat the final boss to clear the game. Weapons fire automatically — just move and stay alive.
+Start quickly, pause anytime, and resume right where you left off — perfect for short breaks between AI-assisted work sessions.
 
-- Platforms: macOS / Linux / Windows
+<div align="center"><img src="./docs/assets/gameplay.png" alt="Game play image" width="600" height="445"></div>
+
+Platforms: macOS / Linux / Windows
 
 ## Play
 
@@ -56,14 +65,23 @@ COMMANDS:
 
 Keyboard only. Mouse is not supported.
 
+### In Game
+
 | Key | Action |
 |-----|--------|
 | `W` `A` `S` `D` / Arrow keys | Move |
-| `Space` | Pause / resume (during play) |
+| `Space` | Pause / resume |
 | `1` `2` `3` | Choose upgrade on level up |
+| `M` | Return to title |
+
+### Menus & Screens
+
+| Key | Action |
+|-----|--------|
 | `Enter` | Start game / resume saved session (title screen) |
 | `N` | Start new game (title screen) |
-| `M` | Return to title (during play) |
+| `A` | Toggle auto restart (title screen) |
+| `B` | Toggle dark mode (title screen) |
 | `R` | Retry after game over / clear |
 | `Q` / `ESC` | Quit |
 
