@@ -5,7 +5,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://kimulaco@github.com/kimulaco/term-survivors.git"
+    "url": "git+https://github.com/kimulaco/term-survivors.git"
   },
   "os": [
     "linux"
