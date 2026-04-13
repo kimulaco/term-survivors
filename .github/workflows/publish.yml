@@ -189,6 +189,7 @@ jobs:
       - name: Create and upload release archives
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
           for pkg in darwin-arm64 darwin-x64 linux-x64 linux-arm64; do
             tar czf term-survivors-${pkg}.tar.gz -C dist/npm-$pkg term-survivors
@@ -196,7 +197,7 @@ jobs:
           done
           tar czf term-survivors-win32-x64.tar.gz -C dist/npm-win32-x64 term-survivors.exe
           sha256sum term-survivors-win32-x64.tar.gz > term-survivors-win32-x64.tar.gz.sha256
-          gh release upload "${{ github.event.release.tag_name }}" \
-            --repo "${{ github.repository }}" \
+          gh release upload "$TAG_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
             term-survivors-*.tar.gz \
             term-survivors-*.sha256
