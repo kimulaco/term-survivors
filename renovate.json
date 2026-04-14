@@ -1,0 +1,29 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["cargo", "github-actions"],
+  "pinDigests": false,
+  "minimumReleaseAge": "3 days",
+  "timezone": "Asia/Tokyo",
+  "schedule": ["before 9am on monday"],
+  "packageRules": [
+    {
+      "matchManagers": ["cargo"],
+      "matchPackageNames": ["ratatui", "crossterm"],
+      "groupName": "TUI dependencies"
+    },
+    {
+      "matchManagers": ["cargo"],
+      "excludePackageNames": ["ratatui", "crossterm"],
+      "groupName": "Rust dependencies"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    }
+  ]
+}
