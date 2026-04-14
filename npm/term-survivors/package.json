@@ -12,7 +12,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://kimulaco@github.com/kimulaco/term-survivors.git"
+    "url": "git+https://github.com/kimulaco/term-survivors.git"
   },
   "engines": {
     "node": ">=20"
@@ -23,6 +23,9 @@
   ],
   "bin": {
     "term-survivors": "index.js"
+  },
+  "publishConfig": {
+    "provenance": true
   },
   "optionalDependencies": {
     "@term-survivors/darwin-arm64": "0.4.0",
