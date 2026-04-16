@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.1](https://github.com/kimulaco/term-survivors/releases/tag/v0.4.1) - 2026-04-16
+
+### Game updates
+
+- No gameplay changes in this release
+
+### Other changes
+
+- chore: improvement npm security (https://github.com/kimulaco/term-survivors/pull/26)
+
 ## [0.4.0](https://github.com/kimulaco/term-survivors/releases/tag/v0.4.0) - 2026-04-12
 
 ### Game updates
