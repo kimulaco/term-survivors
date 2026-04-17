@@ -410,7 +410,7 @@ impl Weapon {
         let jitter = (base_jitter - (self.level as i32 - 1) / 2).max(0);
         let radius = base_radius + (self.level as i32 - 1) / 3;
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         // Sort by distance to player, keep up to 3 closest as target candidates
         let mut sorted = enemies.to_vec();
@@ -421,22 +421,22 @@ impl Weapon {
             // Target: random from 3 closest enemies, or random field position if none
             let (base_x, base_y) = if candidates.is_empty() {
                 (
-                    rng.gen_range(0..config::MAX_FIELD_WIDTH),
-                    rng.gen_range(0..config::MAX_FIELD_HEIGHT),
+                    rng.random_range(0..config::MAX_FIELD_WIDTH),
+                    rng.random_range(0..config::MAX_FIELD_HEIGHT),
                 )
             } else {
-                let (_, ex, ey) = candidates[rng.gen_range(0..candidates.len())];
+                let (_, ex, ey) = candidates[rng.random_range(0..candidates.len())];
                 (ex, ey)
             };
             let tx = base_x
                 + if jitter > 0 {
-                    rng.gen_range(-jitter..=jitter)
+                    rng.random_range(-jitter..=jitter)
                 } else {
                     0
                 };
             let ty = base_y
                 + if jitter > 0 {
-                    rng.gen_range(-jitter..=jitter)
+                    rng.random_range(-jitter..=jitter)
                 } else {
                     0
                 };
