@@ -14,8 +14,11 @@
     },
     {
       "matchManagers": ["cargo"],
-      "excludePackageNames": ["ratatui", "crossterm"],
-      "groupName": "Rust dependencies"
+      "groupName": "Rust dependencies",
+      "matchPackageNames": [
+        "!ratatui",
+        "!crossterm"
+      ]
     },
     {
       "matchManagers": ["github-actions"],
