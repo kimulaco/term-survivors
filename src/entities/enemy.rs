@@ -201,7 +201,7 @@ pub fn spawn_enemy(
         }
     }
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     // Pick random kind from available
     let available: Vec<EnemyKind> = [
@@ -220,14 +220,14 @@ pub fn spawn_enemy(
         return None;
     }
 
-    let kind = available[rng.gen_range(0..available.len())];
+    let kind = available[rng.random_range(0..available.len())];
 
     // Spawn at random edge
-    let (x, y) = match rng.gen_range(0..4) {
-        0 => (rng.gen_range(0..field_width), 0), // top
-        1 => (rng.gen_range(0..field_width), field_height - 1), // bottom
-        2 => (0, rng.gen_range(0..field_height)), // left
-        _ => (field_width - 1, rng.gen_range(0..field_height)), // right
+    let (x, y) = match rng.random_range(0..4) {
+        0 => (rng.random_range(0..field_width), 0), // top
+        1 => (rng.random_range(0..field_width), field_height - 1), // bottom
+        2 => (0, rng.random_range(0..field_height)), // left
+        _ => (field_width - 1, rng.random_range(0..field_height)), // right
     };
 
     Some(Enemy::new(kind, x, y))

@@ -74,7 +74,7 @@ pub fn generate_choices(weapons: &[Weapon]) -> Vec<Upgrade> {
     // Always offer utility upgrades
     pool.push(Upgrade::HealHp);
     pool.push(Upgrade::MaxHpUp);
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     pool.shuffle(&mut rng);
     pool.truncate(3);
     pool

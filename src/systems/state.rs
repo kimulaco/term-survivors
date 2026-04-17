@@ -96,7 +96,7 @@ impl App {
         self.has_session = false;
         self.game = GameState::new(self.game.field_width, self.game.field_height);
         let mut pool: Vec<WeaponKind> = ALL_WEAPONS.to_vec();
-        pool.shuffle(&mut rand::thread_rng());
+        pool.shuffle(&mut rand::rng());
         pool.truncate(3);
         self.phase = AppPhase::WeaponSelect(pool, 0);
     }
