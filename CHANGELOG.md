@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.2](https://github.com/kimulaco/term-survivors/releases/tag/v0.4.2) - 2026-04-19
+
+### Game updates
+
+- No gameplay changes in this release
+- Update dependencies
+  - fix(deps): update rust crate rand to 0.9 [security] (https://github.com/kimulaco/term-survivors/pull/30)
+  - fix(deps): update rust crate rand to 0.10 (https://github.com/kimulaco/term-survivors/pull/35)
+
+### Other changes
+
+- chore(deps): update actions/upload-artifact action to v7 (https://github.com/kimulaco/term-survivors/pull/36)
+- chore(deps): update github actions (https://github.com/kimulaco/term-survivors/pull/34)
+
 ## [0.4.1](https://github.com/kimulaco/term-survivors/releases/tag/v0.4.1) - 2026-04-16
 
 ### Game updates
