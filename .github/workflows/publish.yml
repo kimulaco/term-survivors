@@ -201,3 +201,19 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             term-survivors-*.tar.gz \
             term-survivors-*.sha256
+
+  dispatch-homebrew-formula:
+    if: github.event_name == 'release'
+    needs: upload-release-assets
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - name: Dispatch update-formula
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_DISPATCH_TOKEN }}
+        run: |
+          gh api repos/kimulaco/homebrew-term-survivors/dispatches \
+            --method POST \
+            --field event_type=new-release
