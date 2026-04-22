@@ -34,6 +34,7 @@ pub struct App {
     pub dy: i32,
     pub screen_shake_ticks: u32,
     pub damage_flash_ticks: u32,
+    pub update_info: Option<crate::systems::update::UpdateInfo>,
 }
 
 impl App {
@@ -48,6 +49,7 @@ impl App {
             dy: 0,
             screen_shake_ticks: 0,
             damage_flash_ticks: 0,
+            update_info: None,
         };
         if has_session && app.save.auto_restart {
             app.resume_game();

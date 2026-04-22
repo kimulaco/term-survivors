@@ -39,7 +39,14 @@ try {
   process.exit(1);
 }
 
-const result = spawnSync(bin, process.argv.slice(2), { shell: false, stdio: "inherit" });
+const result = spawnSync(bin, process.argv.slice(2), {
+  shell: false,
+  stdio: "inherit",
+  env: {
+    ...process.env,
+    TERM_SURVIVORS_INSTALLED_VIA: "npm",
+  },
+});
 
 if (result.error) {
   throw result.error;
