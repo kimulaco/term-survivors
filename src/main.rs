@@ -143,6 +143,7 @@ fn run_game() -> io::Result<()> {
         "term-survivors v{} started",
         env!("CARGO_PKG_VERSION")
     ));
+    let update_info = systems::update::check();
 
     let original_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
@@ -161,6 +162,7 @@ fn run_game() -> io::Result<()> {
     let field_height = (size.height as i32 - config::STATUS_BAR_HEIGHT as i32 - 2)
         .clamp(1, config::MAX_FIELD_HEIGHT);
     let mut app = App::new(field_width, field_height);
+    app.update_info = update_info;
 
     let tick_duration = Duration::from_millis(config::TICK_DURATION_MS);
 

@@ -140,6 +140,24 @@ fn draw_title(frame: &mut Frame, area: Rect, app: &App) {
         )));
     }
 
+    if let Some(info) = &app.update_info {
+        lines.push(Line::from(""));
+        lines.push(Line::from(Span::styled(
+            format!(
+                "  New version available: v{} → v{}",
+                env!("CARGO_PKG_VERSION"),
+                info.latest_version
+            ),
+            Style::default().fg(Color::Yellow),
+        )));
+        if let Some(cmd) = &info.install_command {
+            lines.push(Line::from(Span::styled(
+                format!("  {cmd}"),
+                Style::default().fg(Color::Yellow),
+            )));
+        }
+    }
+
     let paragraph = Paragraph::new(lines).alignment(Alignment::Center);
     frame.render_widget(paragraph, area);
 }
