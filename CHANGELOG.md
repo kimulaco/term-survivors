@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.0](https://github.com/kimulaco/term-survivors/releases/tag/v0.5.0) - 2026-04-25
+
+### Game updates
+
+- feat: display update notification on title screen (https://github.com/kimulaco/term-survivors/pull/40)
+
 ## [0.4.2](https://github.com/kimulaco/term-survivors/releases/tag/v0.4.2) - 2026-04-19
 
 ### Game updates
