@@ -118,6 +118,9 @@ jobs:
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           key: ${{ matrix.target }}
+      - name: Install musl-tools
+        if: "matrix.os == 'ubuntu-latest' && !matrix.use_cross"
+        run: sudo apt-get install -y musl-tools
       - name: Install cross
         if: matrix.use_cross
         run: cargo install cross --locked
