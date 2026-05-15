@@ -43,15 +43,18 @@ pub fn check() -> Option<UpdateInfo> {
 }
 
 fn fetch_latest_version() -> Option<String> {
-    let agent = ureq::AgentBuilder::new().timeout(REQUEST_TIMEOUT).build();
+    let agent = ureq::Agent::config_builder()
+        .timeout_global(Some(REQUEST_TIMEOUT))
+        .build()
+        .new_agent();
 
     let response = agent
         .get(LATEST_RELEASE_API)
-        .set("User-Agent", USER_AGENT)
+        .header("User-Agent", USER_AGENT)
         .call()
         .ok()?;
 
-    let json: serde_json::Value = response.into_json().ok()?;
+    let json: serde_json::Value = response.into_body().read_json().ok()?;
     let tag = json["tag_name"].as_str()?;
     Some(tag.trim_start_matches('v').to_string())
 }
